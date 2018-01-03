@@ -1,62 +1,89 @@
 #ifndef BREAK_EVEN_VOLATILITY_HPP
 #define BREAK_EVEN_VOLATILITY_CPP
-#include <ostream>
+#include <iostream>
+#include <vector>
 #include <string>
+#include <fstream>
+#include <sstream>
+#include <cmath>
+#include <numeric> //for std::iota
 
-namespace project
+class time_series
 {
-	class vol // maybe to delete
-	{
-		public:
-			explicit vol(const size_t mat, const double strike, const std::string underlying);
-			virtual ~vol();
+public:
+    //constructor and destructor
+    time_series(const std::string& filepath, const std::string& dataname);
+    ~time_series();
+    std::vector<double> get_data() const;
+    
+    //methods
+    std::vector<double> get_data() const;
+    std::vector<double> get_data(const std::string& maturity, const size_t& day_number) const;
+    std::vector<size_t> day_to_maturity(const std::string& maturity, const size_t& day_number) const;
+    //std::vector<std::string> get_date(const std::string& maturity, const size_t& data_length) const;
+    
+private:
+    std::string m_filepath;
+    std::string m_dataname;
+    std::vector<std::string> m_datadate;
+    std::vector<double> m_data;
+};
 
-		private:
-		protected:
+class vol // maybe to delete
+{
+    public:
+        explicit vol(const size_t mat, const double strike, const std::string underlying);
+        virtual ~vol();
 
-	}
+    private:
+    protected:
 
-	class pricer : public vol // maybe to change
-	{
-		public:
-			//constructor and destructor
-			pricer(const std::vector<double>& underlying, const double& strike, const double& vol, const std::vector<double>& rate ,const size_t& mat);
-			~pricer();
+};
+/*
+class pricer
+{
+public:
+    //constructor and destructor
+    pricer(const time_series& underlying, const double& strike, const double& vol, const time_series& rate, const size_t& maturity);
+    ~pricer();
 
-			//pricer and delta of the option
-			const BS_pricer(const std::vector<double>& underlying, const double& strike, const double&vol, const std::vector<double>& rate, const size_t& mat) const;
-			const BS_delta(const std::vector<double>& underlying, const double& strike, const double&vol, const std::vector<double>& rate, const size_t& mat) const;
+    //daily price and delta of the option
+    std::vector<double> BS_price() const;
+    std::vector<double> BS_delta() const;
 
+private:
+    // don't know just put it here but maybe to be removed
+    time_series m_underlying;
+    double m_strike;
+    double m_vol;
+    time_series m_rate;
+    size_t m_maturity;
+protected:
+};
 
-
-		private:
-
-			// don't know just put it here but maybe to be removed
-			double& spot; 
-			double& vol;
-			size_t& mat;
-			double& strike;
-		protected:
-	}
-
-	class PnL : public vol //maybe to change
-	{
-		public:
-
-			//constructor and destructor
-			PnL(const std::vector<double>& underlying, const double& strike, const double& vol, const std::vector<double>& rate ,const size_t& mat);
-			~PnL();
-
-			//computation of the PnL, use of the pricers formulas
-			const Hedged_PnL(const std::vector<double>& underlying, const double& strike, const double& vol, const std::vector<double>& rate, const size_t& mat) const;
-			//maybe have a get_vol method here, since we will find the fair vol here
-
-		
-		private:
-		protected:
-	}
-	
+class portfolio
+{
+public:
+private:
 }
+*/
+/*
+class PnL : public vol //maybe to change
+{
+    public:
 
+        //constructor and destructor
+        PnL(const std::vector<double>& underlying, const double& strike, const double& vol, const std::vector<double>& rate ,const size_t& mat);
+        ~PnL();
+
+        //computation of the PnL, use of the pricers formulas
+        const Hedged_PnL(const std::vector<double>& underlying, const double& strike, const double& vol, const std::vector<double>& rate, const size_t& mat) const;
+        //maybe have a get_vol method here, since we will find the fair vol here
+
+    
+    private:
+    protected:
+}
+*/
 
 #endif

@@ -2,7 +2,8 @@
 #include <vector>
 #include "break_even_volatility.hpp"
 
-double main
-{}
+int main(int argc, char* argv[])
+{
 
+}
 
