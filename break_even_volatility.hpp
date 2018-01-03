@@ -14,12 +14,12 @@ public:
     //constructor and destructor
     time_series(const std::string& filepath, const std::string& dataname);
     ~time_series();
-    std::vector<double> get_data() const;
     
     //methods
-    std::vector<double> get_data() const;
-    std::vector<double> get_data(const std::string& maturity, const size_t& day_number) const;
-    std::vector<size_t> day_to_maturity(const std::string& maturity, const size_t& day_number) const;
+    std::vector<std::string> get_dataname() const; // get private data member m_dataname
+    std::vector<double> get_data() const; // get the whole series of data
+    std::vector<double> get_data(const std::string& maturity, const size_t& day_number) const; // get a part of the series with the end date and target number of days
+    std::vector<size_t> day_to_maturity(const std::string& maturity, const size_t& day_number) const; // create a vector containing daily days to maturity
     //std::vector<std::string> get_date(const std::string& maturity, const size_t& data_length) const;
     
 private:
