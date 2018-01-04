@@ -35,27 +35,32 @@ time_series::~time_series()
 ********************************************/
 
 // method to get private data member m_dataname
-std::vector<std::string> time_series::get_dataname() const
+std::string time_series::get_dataname() const
 {
     return m_dataname;
 }
 
-// method to get the whole series of data
+// methods to get the whole series of data
 std::vector<double> time_series::get_data() const
 {
     return m_data;
 }
 
-// method to get a part of the series with the end date and target number of calendar days (1 month -> 30 days, 6 months -> 180 days)
-std::vector<double> time_series::get_data(const std::string& maturity, const size_t& calday_number) const
+std::vector<time_t> time_series::get_date() const
 {
-    time_t maturityt = c_str_timet(maturity); // convert the maturity string to time_t object
-    
+    return m_datadate;
+}
+
+// method to determine the starting and ending positions of the target data series
+std::vector<ptrdiff_t> time_series::get_datapos(const std::string& maturity, const size_t& day_to_maturity) const
+{
+    std::vector<ptrdiff_t> result(2);
+    time_t maturityt = c_str_timet(maturity); // convert the maturity time string to time_t object
     ptrdiff_t endpos = std::find(m_datadate.begin(), m_datadate.end(), maturityt) - m_datadate.begin(); // find the position of maturity date
     if (endpos >= m_datadate.size()) // check if the end date is in the data series
     {
         std::cout << "Target date is not found in the data!!" << std::endl;
-        return 0; // !!TO DO: Replace by error!
+        return result; // !!TO DO: Replace by error!
     }
     else
     {
@@ -64,7 +69,7 @@ std::vector<double> time_series::get_data(const std::string& maturity, const siz
         bool startfound = false;
         while(daycount <= 7)
         {
-            time_t startt = maturityt - (calday_number + daycount)*24*60*60;
+            time_t startt = maturityt - (day_to_maturity + daycount)*24*60*60; // define the starting date by end date - number of calendar days (- daycount if previous date doesn't exist in the data series)
             startpos = std::find(m_datadate.begin(), m_datadate.end(), startt) - m_datadate.begin();
             if (startpos < m_datadate.size())
             {
@@ -74,18 +79,34 @@ std::vector<double> time_series::get_data(const std::string& maturity, const siz
             daycount += 1;
         }
         
-        if(startfound = false)
+        if(startfound == false)
         {
             std::cout << "Not enough historical data!!" << std::endl;
-            return 0; // !!TO DO: Replace by error!
+            return result; // !!TO DO: Replace by error!
         }
         else
         {
-            return std::vector<double> result(m_data.begin() + startpos, m_data.begin() + endpos) // return the required data
+            result = {startpos, endpos};
+            return result;
         }
     }
 }
 
+// method to get a part of the series (data) with starting and ending positions
+std::vector<double> time_series::get_data(const ptrdiff_t& startpos, const ptrdiff_t& endpos) const
+{
+    std::vector<double> result(m_data.begin() + startpos, m_data.begin() + endpos + 1);
+    return result;
+}
+
+// method to get a part of the series (date) with starting and ending positions
+std::vector<time_t> time_series::get_date(const ptrdiff_t& startpos, const ptrdiff_t& endpos) const
+{
+    std::vector<time_t> result(m_datadate.begin() + startpos, m_datadate.begin() + endpos + 1);
+    return result;
+}
+
+/*
 // method to create a vector containing daily days to maturity
 std::vector<size_t> day_to_maturity(const size_t& day_number) const
 {
@@ -94,7 +115,7 @@ std::vector<size_t> day_to_maturity(const size_t& day_number) const
     std::for_each(result.begin(), result.end(), [](size_t& x) {x = day_number - x;}); // revert the vector from ascending order to descending order
     return result;
 }
-
+*/
 
 /*******************************************
      *pricer constructor & destructor*
@@ -103,6 +124,7 @@ std::vector<size_t> day_to_maturity(const size_t& day_number) const
 pricer::pricer(const time_series& underlying, const double& strike, const double& vol, const time_series& rate, const size_t& maturity)
 : m_underlying(underlying), m_strike(strike), m_vol(vol), m_rate(rate), m_maturity(maturity)
 {
+    
 }
 
 pricer::~pricer()
@@ -111,18 +133,22 @@ pricer::~pricer()
 
 std::vector<double> pricer::BS_price() const
 {
-    std::vector<size_t> time_to_maturity = m_underlying.day_to_maturity(m_maturity)
+    /*std::vector<size_t> time_to_maturity = m_underlying.day_to_maturity(m_maturity)
     
     std::vector<double> timeToMaturity = 
-    double d1 = 1/(m_vol)
+    double d1 = 1/(m_vol)*/
 }
 
 
 // function converting date string to time_t object
 time_t c_str_timet(const std::string& targetdate)
 {
-    struct tm t;
+    struct tm temp = {0};
+    
     std::istringstream tt(targetdate); // convert the date string to stringstream
-    tt >> std:: get_time(&t, "%d/%m/%Y"); // convert the date stringstream to struct tm
-    return std::mktime(&t); // convert struct tm to time_t
+    tt >> std::get_time(&temp, "%d/%m/%Y"); // convert the date stringstream to struct tm
+    
+    time_t result = std::mktime(&temp);
+    return result; // convert struct tm to time_t
 }
+
