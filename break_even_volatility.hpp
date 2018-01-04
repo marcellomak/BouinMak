@@ -21,7 +21,7 @@ public:
     std::string get_dataname() const; // get private data member m_dataname
     std::vector<double> get_data() const; // get the whole series of data
     std::vector<time_t> get_date() const;
-    std::vector<ptrdiff_t> get_datapos(const std::string& maturity, const size_t& day_to_maturity) const; // determine the positions of the target data series
+    std::vector<ptrdiff_t> get_datapos(const std::string& maturity, const size_t& term_day) const; // determine the positions of the target data series
     std::vector<double> get_data(const ptrdiff_t& startpos, const ptrdiff_t& endpos) const; // get a part of the series with starting and ending positions
     std::vector<time_t> get_date(const ptrdiff_t& startpos, const ptrdiff_t& endpos) const;
     //std::vector<size_t> day_to_maturity(const size_t& day_number) const; // create a vector containing daily days to maturity
@@ -63,7 +63,7 @@ class pricer
 {
 public:
     //constructor and destructor
-    pricer(const time_series& underlying, const double& strike, const double& vol, const time_series& rate, const size_t& maturity);
+    pricer(const time_series& underlying, const double& strike, const double& vol, const time_series& rate, const std::string& maturity, const size_t& term_day);
     ~pricer();
 
     //daily price and delta of the option
@@ -75,7 +75,11 @@ private:
     double m_strike;
     double m_vol;
     time_series m_rate;
-    size_t m_maturity;
+    std::string m_maturity;
+    size_t m_term_day;
+    std::vector<ptrdiff_t> m_datapos;
+    std::vector<double> m_fixedrate;
+    
     
 protected:
 };

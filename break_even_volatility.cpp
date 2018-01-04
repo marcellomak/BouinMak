@@ -52,7 +52,7 @@ std::vector<time_t> time_series::get_date() const
 }
 
 // method to determine the starting and ending positions of the target data series
-std::vector<ptrdiff_t> time_series::get_datapos(const std::string& maturity, const size_t& day_to_maturity) const
+std::vector<ptrdiff_t> time_series::get_datapos(const std::string& maturity, const size_t& term_day) const
 {
     std::vector<ptrdiff_t> result(2);
     time_t maturityt = c_str_timet(maturity); // convert the maturity time string to time_t object
@@ -69,7 +69,7 @@ std::vector<ptrdiff_t> time_series::get_datapos(const std::string& maturity, con
         bool startfound = false;
         while(daycount <= 7)
         {
-            time_t startt = maturityt - (day_to_maturity + daycount)*24*60*60; // define the starting date by end date - number of calendar days (- daycount if previous date doesn't exist in the data series)
+            time_t startt = maturityt - (term_day + daycount)*24*60*60; // define the starting date by end date - number of calendar days (- daycount if previous date doesn't exist in the data series)
             startpos = std::find(m_datadate.begin(), m_datadate.end(), startt) - m_datadate.begin();
             if (startpos < m_datadate.size())
             {
@@ -121,10 +121,46 @@ std::vector<size_t> day_to_maturity(const size_t& day_number) const
      *pricer constructor & destructor*
 ********************************************/
 
-pricer::pricer(const time_series& underlying, const double& strike, const double& vol, const time_series& rate, const size_t& maturity)
-: m_underlying(underlying), m_strike(strike), m_vol(vol), m_rate(rate), m_maturity(maturity)
+pricer::pricer(const time_series& underlying, const double& strike, const double& vol, const time_series& rate, const std::string& maturity, const size_t& term_day)
+: m_underlying(underlying), m_strike(strike), m_vol(vol), m_rate(rate), m_maturity(maturity), m_term_day(term_day)
 {
+    // create a vector of interest rate data with dates match with those of the underlying data
+    m_datapos = m_underlying.get_datapos(m_maturity, m_term_day);
+    std::vector<ptrdiff_t> ratedatapos = m_rate.get_datapos(m_maturity, m_term_day);
     
+    std::vector<time_t> datadate = m_underlying.get_date(m_datapos[0], m_datapos[1]);
+    std::vector<time_t> ratedate = m_rate.get_date(ratedatapos[0], ratedatapos[1]);
+    
+    std::vector<double> ratedata = m_rate.get_data(ratedatapos[0], ratedatapos[1]);
+    
+    ptrdiff_t targetpos;
+    time_t targetdate;
+    
+    for(int i = 0; i < m_underlying.size(); i++)
+    {
+        int daycount = 0;
+        bool targetfound = false;
+        while(daycount <= 7)
+        {
+            targetdate = datadate[i] - daycount*24*60*60;
+            targetpos = std::find(ratedate.begin(), ratedate.end(), targetdate) - ratedate.begin();
+            if (targetpos < m_datadate.size())
+            {
+                startfound = true;
+                break;
+            }
+            daycount += 1;
+        }
+        if(targetfound == false)
+        {
+            std::cout << "Missing interest rate data!" << std::endl;
+            m_fixedrate.push_back(0); // !!TO DO: Replace by error!
+        }
+        else
+        {
+            m_fixedrate.push_back(ratedata[targetpos]);
+        }
+    }
 }
 
 pricer::~pricer()
