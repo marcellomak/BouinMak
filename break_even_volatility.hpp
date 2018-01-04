@@ -79,8 +79,7 @@ private:
     size_t m_term_day;
     std::vector<ptrdiff_t> m_datapos;
     std::vector<double> m_fixedrate;
-    
-    
+
 protected:
 };
 

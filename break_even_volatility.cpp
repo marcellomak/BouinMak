@@ -124,41 +124,43 @@ std::vector<size_t> day_to_maturity(const size_t& day_number) const
 pricer::pricer(const time_series& underlying, const double& strike, const double& vol, const time_series& rate, const std::string& maturity, const size_t& term_day)
 : m_underlying(underlying), m_strike(strike), m_vol(vol), m_rate(rate), m_maturity(maturity), m_term_day(term_day)
 {
-    // create a vector of interest rate data with dates match with those of the underlying data
+    // store the position of data (target period) in the whole underlying series
     m_datapos = m_underlying.get_datapos(m_maturity, m_term_day);
-    std::vector<ptrdiff_t> ratedatapos = m_rate.get_datapos(m_maturity, m_term_day);
     
-    std::vector<time_t> datadate = m_underlying.get_date(m_datapos[0], m_datapos[1]);
-    std::vector<time_t> ratedate = m_rate.get_date(ratedatapos[0], ratedatapos[1]);
+    // create a vector of interest rate data with dates match with those of the underlying data
+    std::vector<ptrdiff_t> rate_datapos = m_rate.get_datapos(m_maturity, m_term_day);
     
-    std::vector<double> ratedata = m_rate.get_data(ratedatapos[0], ratedatapos[1]);
+    std::vector<time_t> data_date = m_underlying.get_date(m_datapos[0], m_datapos[1]);
+    std::vector<time_t> rate_date = m_rate.get_date(rate_datapos[0], rate_datapos[1]);
     
-    ptrdiff_t targetpos;
-    time_t targetdate;
+    std::vector<double> rate_data = m_rate.get_data(rate_datapos[0], rate_datapos[1]);
+    
+    ptrdiff_t target_pos;
+    time_t target_date;
     
     for(int i = 0; i < m_underlying.size(); i++)
     {
-        int daycount = 0;
-        bool targetfound = false;
-        while(daycount <= 7)
+        int day_count = 0;
+        bool target_found = false;
+        while(day_count <= 7)
         {
-            targetdate = datadate[i] - daycount*24*60*60;
-            targetpos = std::find(ratedate.begin(), ratedate.end(), targetdate) - ratedate.begin();
-            if (targetpos < m_datadate.size())
+            target_date = data_date[i] - day_count*24*60*60;
+            target_pos = std::find(rate_date.begin(), rate_date.end(), target_date) - rate_date.begin();
+            if (target_pos < m_datadate.size())
             {
-                startfound = true;
+                target_found = true;
                 break;
             }
-            daycount += 1;
+            day_count += 1;
         }
-        if(targetfound == false)
+        if(target_found == false)
         {
             std::cout << "Missing interest rate data!" << std::endl;
             m_fixedrate.push_back(0); // !!TO DO: Replace by error!
         }
         else
         {
-            m_fixedrate.push_back(ratedata[targetpos]);
+            m_fixedrate.push_back(rate_data[target_pos]);
         }
     }
 }
@@ -169,10 +171,15 @@ pricer::~pricer()
 
 std::vector<double> pricer::BS_price() const
 {
-    /*std::vector<size_t> time_to_maturity = m_underlying.day_to_maturity(m_maturity)
+    std::vector<double> underlying_data = m_underlying.get_data(m_datapos[0], m_datapos[1]);
     
-    std::vector<double> timeToMaturity = 
-    double d1 = 1/(m_vol)*/
+    // create a vector to store time to maturity in year (based on trading days)
+    std::vector<size_t> time_to_maturity(underlying_data.size());
+    std::iota(time_to_maturity.begin(), time_to_maturity.end(), 1); // fill the vector with increasing number from 1,2,3,...
+    std::for_each(time_to_maturity.begin(), time_to_maturity.end(), [](size_t& arg) {return (underlying_data.size() - arg)/252.;}); // revert the vector from ascending order to descending order
+    
+    
+    
 }
 
 
