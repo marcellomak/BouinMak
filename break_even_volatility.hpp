@@ -108,6 +108,7 @@ public:
     std::vector<double> BS_price() const;
     std::vector<double> BS_delta() const;
     void modify_vol(const double& vol);
+    const double get_volatility();
 
 private:
     time_series m_underlying;

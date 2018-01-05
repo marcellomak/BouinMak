@@ -281,6 +281,12 @@ void modify_vol(const double& vol)
 {
 	m_vol = vol;
 }
+
+const double get_volatility()
+{
+	return m_vol;
+}
+
 /*******************************************
           *auxillary functions*
 ********************************************/

@@ -13,9 +13,17 @@ const std::vector<double> PnL_Hedged(const option& opt)
 const std::vector<double> Fair_vol(const option& opt, const double& tol)
 {
 	const std::vector<double> PnL = PnL_Hedged(opt);
-	const double up_vol = opt.get_vol() + 20./100.;
-	const double low_vol = 0.;
-	const double mid_vol = (up_vol + low_vol)/2.; 
+	double up_vol = opt.get_vol() + 20./100.;
+	double low_vol = 0.;
+	double mid_vol = (up_vol + low_vol)/2.;
+
+	while (PnL[0]>tol)
+	{
+		opt.modify_vol(mid_vol);
+		PnL = PnL_Hedged(opt);
+
+
+	}
 }
 
 int main(int argc, char* argv[])
