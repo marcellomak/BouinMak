@@ -1,29 +1,11 @@
 #include "break_even_volatility.hpp"
 
 /*******************************************
-        *time series implementation*
+ *time series constructor & destructor*
 ********************************************/
 
-time_series::time_series(const std::string& dataname)
-    : m_dataname(dataname)
-{
-}
-
-time_series::~time_series()
-{
-}
-
-const std::string& time_series::get_dataname() const
-{
-    return m_dataname;
-}
-
-/*******************************************
-    *dynamic time series implementation*
-********************************************/
-
-dynamic_time_series::dynamic_time_series(const std::string& filepath, const std::string& dataname)
-    : m_filepath(filepath), time_series(dataname)
+time_series::time_series(const std::string& filepath, const std::string& dataname)
+    : m_filepath(filepath), m_dataname(dataname)
 {
     // read data from the csv file (with column 1 as dates and column 2 as data)
     std::ifstream file(m_filepath);
@@ -43,26 +25,36 @@ dynamic_time_series::dynamic_time_series(const std::string& filepath, const std:
     }
 }
 
-dynamic_time_series::~dynamic_time_series()
+time_series::~time_series()
 {
 }
 
+
+/*******************************************
+ *time series methods*
+ ********************************************/
+
+// method to get private data member m_dataname
+const std::string& time_series::get_dataname() const
+{
+    return m_dataname;
+}
+
 // methods to get the whole series of data
-std::vector<double> dynamic_time_series::get_data() const
+const std::vector<double>& time_series::get_data() const
 {
     return m_data;
 }
 
-std::vector<time_t> dynamic_time_series::get_date() const
+const std::vector<time_t>& time_series::get_date() const
 {
     return m_datadate;
 }
 
 // method to determine the starting and ending positions of the target data series
-std::vector<ptrdiff_t> dynamic_time_series::get_datapos(const std::string& maturity, const size_t& term_day) const
+std::vector<ptrdiff_t> time_series::get_datapos(const std::string& maturity, const size_t& term_day) const
 {
     std::vector<ptrdiff_t> result(2);
-    
     time_t maturityt = c_str_timet(maturity); // convert the maturity time string to time_t object
     ptrdiff_t endpos = std::find(m_datadate.begin(), m_datadate.end(), maturityt) - m_datadate.begin(); // find the position of maturity date
     if (endpos >= m_datadate.size()) // check if the end date is in the data series
@@ -101,14 +93,14 @@ std::vector<ptrdiff_t> dynamic_time_series::get_datapos(const std::string& matur
 }
 
 // method to get a part of the series (data) with starting and ending positions
-std::vector<double> dynamic_time_series::get_data(const ptrdiff_t& startpos, const ptrdiff_t& endpos) const
+std::vector<double> time_series::get_data(const ptrdiff_t& startpos, const ptrdiff_t& endpos) const
 {
     std::vector<double> result(m_data.begin() + startpos, m_data.begin() + endpos + 1);
     return result;
 }
 
 // method to get a part of the series (date) with starting and ending positions
-std::vector<time_t> dynamic_time_series::get_date(const ptrdiff_t& startpos, const ptrdiff_t& endpos) const
+std::vector<time_t> time_series::get_date(const ptrdiff_t& startpos, const ptrdiff_t& endpos) const
 {
     std::vector<time_t> result(m_datadate.begin() + startpos, m_datadate.begin() + endpos + 1);
     return result;
@@ -116,49 +108,11 @@ std::vector<time_t> dynamic_time_series::get_date(const ptrdiff_t& startpos, con
 
 
 /*******************************************
-   *constant time series implementation*
-********************************************/
-
-constant_time_series::constant_time_series(const double& cvalue, const std::string& end_date, const size_t& term_day, const std::string& dataname = "")
-    : m_cvalue(cvalue), m_end_date(end_date), m_term_day(term_day), time_series(dataname)
-{
-    // create the date vector
-    m_datadate.reserve(term_day + 1);
-    time_t end_datet = c_str_timet(m_end_date);
-    
-    for(int i = 0; i <= m_term_day; i++)
-    {
-        m_datadate[m_term_day - i] = end_datet - i*24*60*60;
-    }
-    
-    // create the data vector
-    m_data.assign(term_day + 1, m_cvalue);
-}
-
-constant_time_series::~constant_time_series()
-{
-}
-
-// methods to get the whole series of data
-std::vector<double> constant_time_series::get_data() const
-{
-    return m_data;
-}
-
-std::vector<time_t> constant_time_series::get_date() const
-{
-    return m_datadate;
-}
-
-
-
-
-/*******************************************
    *call option constructor & destructor*
 ********************************************/
 
-call_option::call_option(const time_series& underlying, const double& strike, const double& vol, const time_series& rate, const std::string& maturity, const size_t& term_day)
-: m_underlying(underlying), m_strike(strike), m_vol(vol), m_rate(rate), m_maturity(maturity), m_term_day(term_day)
+option::option(const time_series& underlying, const double& strike, const double& vol, const time_series& rate, const std::string& maturity, const size_t& term_day)
+    : m_underlying(underlying), m_strike(strike), m_vol(vol), m_rate(rate), m_maturity(maturity), m_term_day(term_day)
 {
     // store the position of data (target period) in the whole underlying series
     m_datapos = m_underlying.get_datapos(m_maturity, m_term_day);
@@ -199,7 +153,19 @@ call_option::call_option(const time_series& underlying, const double& strike, co
     }
 }
 
-call_option::~call_option()
+option::option(const time_series& underlying, const double& strike, const double& vol, const double& rate, const std::string& maturity, const size_t& term_day)
+    : m_underlying(underlying), m_strike(strike), m_vol(vol), m_maturity(maturity), m_term_day(term_day)
+{
+    // store the position of data (target period) in the whole underlying series
+    m_datapos = m_underlying.get_datapos(m_maturity, m_term_day);
+    
+    // create a vector of interest rate data with dates match with those of the underlying data
+    std::vector<time_t> data_date = m_underlying.get_date(m_datapos[0], m_datapos[1]); // get the dates of the target underlying data
+    
+    m_fixedrate.assign(data_date.size(), rate); // fill the interest rate vector with the constant rate
+}
+
+option::~option()
 {
 }
 
@@ -208,7 +174,7 @@ call_option::~call_option()
           *call option methods*
 ********************************************/
 
-std::vector<double> call_option::BS_price() const
+std::vector<double> option::BS_price() const
 {
     std::vector<double> underlying_data = m_underlying.get_data(m_datapos[0], m_datapos[1]);
 
@@ -239,7 +205,7 @@ std::vector<double> call_option::BS_price() const
     return option_price;
 }
 
-std::vector<double> call_option::BS_delta() const
+std::vector<double> option::BS_delta() const
 {
     std::vector<double> underlying_data = m_underlying.get_data(m_datapos[0], m_datapos[1]);
     
