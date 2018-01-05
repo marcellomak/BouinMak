@@ -132,13 +132,26 @@ constant_time_series::constant_time_series(const double& cvalue, const std::stri
     }
     
     // create the data vector
-    m_data.reserve(term_day + 1);
-    
+    m_data.assign(term_day + 1, m_cvalue);
 }
 
 constant_time_series::~constant_time_series()
 {
 }
+
+// methods to get the whole series of data
+std::vector<double> constant_time_series::get_data() const
+{
+    return m_data;
+}
+
+std::vector<time_t> constant_time_series::get_date() const
+{
+    return m_datadate;
+}
+
+
+
 
 /*******************************************
    *call option constructor & destructor*
