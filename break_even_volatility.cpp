@@ -258,12 +258,12 @@ std::vector<double> option::BS_delta() const
     return option_delta;
 }
 
-void modify_vol(const double& vol)
+void option::modify_vol(const double& vol)
 {
 	m_vol = vol;
 }
 
-const double get_volatility()
+const double option::get_volatility()
 {
 	return m_vol;
 }
