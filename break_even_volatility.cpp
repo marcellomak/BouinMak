@@ -1,11 +1,29 @@
 #include "break_even_volatility.hpp"
 
 /*******************************************
-   *time series constructor & destructor*
+        *time series implementation*
 ********************************************/
 
-time_series::time_series(const std::string& filepath, const std::string& dataname)
-:m_filepath(filepath), m_dataname(dataname)
+time_series::time_series(const std::string& dataname)
+    : m_dataname(dataname)
+{
+}
+
+time_series::~time_series()
+{
+}
+
+const std::string& time_series::get_dataname() const
+{
+    return m_dataname;
+}
+
+/*******************************************
+    *dynamic time series implementation*
+********************************************/
+
+dynamic_time_series::dynamic_time_series(const std::string& filepath, const std::string& dataname)
+    : m_filepath(filepath), time_series(dataname)
 {
     // read data from the csv file (with column 1 as dates and column 2 as data)
     std::ifstream file(m_filepath);
@@ -25,36 +43,26 @@ time_series::time_series(const std::string& filepath, const std::string& datanam
     }
 }
 
-time_series::~time_series()
+dynamic_time_series::~dynamic_time_series()
 {
-}
-
-
-/*******************************************
-           *time series methods*
-********************************************/
-
-// method to get private data member m_dataname
-std::string time_series::get_dataname() const
-{
-    return m_dataname;
 }
 
 // methods to get the whole series of data
-std::vector<double> time_series::get_data() const
+std::vector<double> dynamic_time_series::get_data() const
 {
     return m_data;
 }
 
-std::vector<time_t> time_series::get_date() const
+std::vector<time_t> dynamic_time_series::get_date() const
 {
     return m_datadate;
 }
 
 // method to determine the starting and ending positions of the target data series
-std::vector<ptrdiff_t> time_series::get_datapos(const std::string& maturity, const size_t& term_day) const
+std::vector<ptrdiff_t> dynamic_time_series::get_datapos(const std::string& maturity, const size_t& term_day) const
 {
     std::vector<ptrdiff_t> result(2);
+    
     time_t maturityt = c_str_timet(maturity); // convert the maturity time string to time_t object
     ptrdiff_t endpos = std::find(m_datadate.begin(), m_datadate.end(), maturityt) - m_datadate.begin(); // find the position of maturity date
     if (endpos >= m_datadate.size()) // check if the end date is in the data series
@@ -93,19 +101,44 @@ std::vector<ptrdiff_t> time_series::get_datapos(const std::string& maturity, con
 }
 
 // method to get a part of the series (data) with starting and ending positions
-std::vector<double> time_series::get_data(const ptrdiff_t& startpos, const ptrdiff_t& endpos) const
+std::vector<double> dynamic_time_series::get_data(const ptrdiff_t& startpos, const ptrdiff_t& endpos) const
 {
     std::vector<double> result(m_data.begin() + startpos, m_data.begin() + endpos + 1);
     return result;
 }
 
 // method to get a part of the series (date) with starting and ending positions
-std::vector<time_t> time_series::get_date(const ptrdiff_t& startpos, const ptrdiff_t& endpos) const
+std::vector<time_t> dynamic_time_series::get_date(const ptrdiff_t& startpos, const ptrdiff_t& endpos) const
 {
     std::vector<time_t> result(m_datadate.begin() + startpos, m_datadate.begin() + endpos + 1);
     return result;
 }
 
+
+/*******************************************
+   *constant time series implementation*
+********************************************/
+
+constant_time_series::constant_time_series(const double& cvalue, const std::string& end_date, const size_t& term_day, const std::string& dataname = "")
+    : m_cvalue(cvalue), m_end_date(end_date), m_term_day(term_day), time_series(dataname)
+{
+    // create the date vector
+    m_datadate.reserve(term_day + 1);
+    time_t end_datet = c_str_timet(m_end_date);
+    
+    for(int i = 0; i <= m_term_day; i++)
+    {
+        m_datadate[m_term_day - i] = end_datet - i*24*60*60;
+    }
+    
+    // create the data vector
+    m_data.reserve(term_day + 1);
+    
+}
+
+constant_time_series::~constant_time_series()
+{
+}
 
 /*******************************************
    *call option constructor & destructor*
