@@ -9,6 +9,7 @@
 #include <numeric> //for std::iota
 #include <ctime>
 #include <iomanip> // for std::get_time
+#include <algorithm>
 
 class time_series
 {
@@ -59,12 +60,12 @@ class vol // maybe to delete
 };
 */
 
-class pricer
+class call_option
 {
 public:
     //constructor and destructor
-    pricer(const time_series& underlying, const double& strike, const double& vol, const time_series& rate, const std::string& maturity, const size_t& term_day);
-    ~pricer();
+    call_option(const time_series& underlying, const double& strike, const double& vol, const time_series& rate, const std::string& maturity, const size_t& term_day);
+    ~call_option();
 
     //daily price and delta of the option
     std::vector<double> BS_price() const;
@@ -110,5 +111,6 @@ class PnL : public vol //maybe to change
 
 // function converting date string to time_t object
 time_t c_str_timet(const std::string& targetdate);
+double normalCDF(const double& x);
 
 #endif
