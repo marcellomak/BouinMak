@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <numeric>
 #include "break_even_volatility.hpp"
 
 
@@ -7,23 +8,34 @@ const std::vector<double> PnL_Hedged(const option& opt)
 {
 	double price = opt.BS_price();
 	double delta = opt.BS_delta();
-	return price - delta;
+	return std::transform(price.begin(),price.end(), delta.begin(), price.begin(), std::minus<double>());
 }
 
 const std::vector<double> Fair_vol(const option& opt, const double& tol)
 {
 	const std::vector<double> PnL = PnL_Hedged(opt);
-	double up_vol = opt.get_vol() + 20./100.;
+	double res = std::accumulate(PnL.begin(), PnL.end(),0);
+	
+	double up_vol = opt.get_volatility() + 20./100.;
 	double low_vol = 0.;
-	double mid_vol = (up_vol + low_vol)/2.;
-
-	while (PnL[0]>tol)
+	
+	while (res>tol)
 	{
+		double mid_vol = (up_vol + low_vol)/2.;
 		opt.modify_vol(mid_vol);
 		PnL = PnL_Hedged(opt);
-
-
+	        res = std::accumulate(PnL.begin(), PnL.end(),0);
+		if res > 0
+		{
+			up_vol = mid_vol;
+		}
+		else if res < 0
+		{
+			low_vol = mid_vol;
+		}
 	}
+
+	return res;
 }
 
 int main(int argc, char* argv[])
