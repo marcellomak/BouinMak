@@ -1,7 +1,13 @@
-#include <iostream>
-#include <vector>
 #include "break_even_volatility.hpp"
-
+#include <stdio.h>
+// #define WINDOWS  /* uncomment this line to use it for windows.*/
+#ifdef WINDOWS
+#include <direct.h>
+#define get_current_dir _getcwd
+#else
+#include <unistd.h>
+#define get_current_dir getcwd
+#endif
 
 const std::vector<double> PnL_Hedged(const option& opt)
 {
@@ -26,8 +32,44 @@ const std::vector<double> Fair_vol(const option& opt, const double& tol)
 	}
 }
 
+std:string get_dir();
+std::vector<double> linspace(double a, double b, size_t n);
+
 int main(int argc, char* argv[])
 {
+    
+    // enter the file name of underlying and interest rate data
+    std::string underlying_filename("");
+    std::string interestrate_filename(""); /* comment this line for constant rate */
+    
+    // read underlying and interest rate data
+    std::string current_dir = get_dir();
+    current_dir.erase(current_dir.size() - 5); // remove "build" from the directory
+    time_series underlying(current_dir + underlying_filename, "S&P500");
+    time_series interestrate(current_dir + interestrate_filename, "TBill"); /* comment this line for constant rate */
+    // double rate = 0.01; /* uncomment this line for constant rate */
+    
+    // create a vector of strike level for creating the volatility smile
+    double low_strike = 0.2;
+    double up_strike = 1.8;
+    std::vector<double> strike = linspace(low_strike, up_strike, (up_strike - low_strike) * 1000) // every 0.1% strike level
+    
+    // target term
+    size_t term = 365;
+    
+    // target date
+    target_date = "18/12/2017"
+    
+    // vol initial bound
+    double up_col = 0.01;
+    double low_vol = 2.;
+    double mid_vol = (up_vol + low_vol) / 2.;
+    
+    option target_option(underlying, strike[0], mid_vol, interestrate, target_date, term, 1);
+    
+    
+    return 0;
+    /*
     std::cout << "TEST Class time series" << std::endl;
     time_series hihi("/Users/Marcello/Documents/My Documents/Academic/2016 Master/Master 203/S3/C++/Test/data.csv", "EuroStoxx 50");
     std::cout << hihi.get_dataname() << std::endl;
@@ -57,8 +99,29 @@ int main(int argc, char* argv[])
     {
         std::cout << optionprice[i] << " and " << optiondelta[i] << std::endl;
     }
+    */
+}
 
-    return 0;
+// a function to get current directory
+std:string get_dir()
+{
+    char buff[FILENAME_MAX];
+    get_current_dir(buff, FILENAME_MAX);
+    std::string current_dir(buff);
+    return current_dir;
+}
+
+std::vector<double> linspace(double a, double b, size_t n)
+{
+    std::vector<double> result(n + 1);
+    double step = (b - a) / n;
+    
+    for(int i = 0; i <= n ; i++)
+    {
+        result[i] = a + i * step;
+    }
+    
+    return result;
 }
 
 /*

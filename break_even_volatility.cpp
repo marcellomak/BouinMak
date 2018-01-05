@@ -268,6 +268,12 @@ const double get_volatility()
 	return m_vol;
 }
 
+void modify_strike(double strike)
+{
+    m_strike = strike;
+}
+
+
 /*******************************************
           *auxillary functions*
 ********************************************/
