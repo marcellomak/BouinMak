@@ -2,6 +2,22 @@
 #include <vector>
 #include "break_even_volatility.hpp"
 
+
+const std::vector<double> PnL_Hedged(const option& opt)
+{
+	double price = opt.BS_price();
+	double delta = opt.BS_delta();
+	return price - delta;
+}
+
+const std::vector<double> Fair_vol(const option& opt, const double& tol)
+{
+	const std::vector<double> PnL = PnL_Hedged(opt);
+	const double up_vol = opt.get_vol() + 20./100.;
+	const double low_vol = 0.;
+	const double mid_vol = (up_vol + low_vol)/2.; 
+}
+
 int main(int argc, char* argv[])
 {
     std::cout << "TEST Class time series" << std::endl;
@@ -33,7 +49,7 @@ int main(int argc, char* argv[])
     {
         std::cout << optionprice[i] << " and " << optiondelta[i] << std::endl;
     }
-    
+
     return 0;
 }
 

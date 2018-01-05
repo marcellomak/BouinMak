@@ -53,20 +53,24 @@ class vol // maybe to delete
 };
 */
 
+<<<<<<< HEAD
 class option
 {
 public:
     // constructor and destructor
-    option(const time_series& underlying, const double& strike, const double& vol, const time_series& rate, const std::string& maturity, const size_t& term_day);
-    option(const time_series& underlying, const double& strike, const double& vol, const double& rate, const std::string& maturity, const size_t& term_day);
+    option(const time_series& underlying, const double& strike, const double& vol, const time_series& rate, const std::string& maturity, const size_t& term_day, const int& type);
+    option(const time_series& underlying, const double& strike, const double& vol, const double& rate, const std::string& maturity, const size_t& term_day, const int& type);
+
     ~option();
 
     // daily price and delta of the option
     std::vector<double> BS_price() const;
     std::vector<double> BS_delta() const;
+    void modify_vol(const double& vol);
 
 private:
     time_series m_underlying;
+    int m_type;
     double m_strike;
     double m_vol;
     time_series m_rate;
