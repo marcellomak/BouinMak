@@ -273,7 +273,21 @@ std::vector<double> option::BS_gamma() const
     std::vector<double> option_gamma(underlying_data.size());
     double d1;
 
+    for(size_t i = 0; i < underlying_data.size(); i++) // calculate the option gamma on each trading day
+    {
+        if(i != underlying_data.size() - 1) // option gamma before maturity
+        {
+            d1 = 1. / (m_vol * sqrt(time_to_maturity[i])) * (log(underlying_data[i] / m_strike) + (m_fixedrate[i] + pow(m_vol, 2.) / 2.) * time_to_maturity[i]);
+            
+            option_gamma[i] = normalPDF(d1) / (underlying_data[i] * m_vol * sqrt(time_to_maturity[i]));
+        }
+        else // gamma at maturity
+        {
+            option_gamma[i] = 0;
+        }
+    }
     
+    return option_gamma;
 }
 
 void option::modify_vol(double vol)
@@ -312,4 +326,11 @@ time_t c_str_timet(const std::string& targetdate)
 double normalCDF(const double& x)
 {
     return std::erfc(-x/sqrt(2))/2;
+}
+
+// function return Normal PDF
+double normalPDF(const double& x)
+{
+    double result = (1. / sqrt(2. * M_PI)) * exp(-pow(x, 2.) / 2);
+    return result;
 }

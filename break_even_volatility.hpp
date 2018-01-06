@@ -10,6 +10,7 @@
 #include <ctime>
 #include <iomanip> // for std::get_time
 #include <algorithm>
+#define _USE_MATH_DEFINES // for constant pi
 
 class time_series
 {
@@ -70,7 +71,6 @@ public:
     void modify_vol(double vol);
     const double get_volatility();
     void modify_strike(double strike);
-    
 
 private:
     time_series m_underlying;
