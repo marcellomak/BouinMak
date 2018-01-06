@@ -13,8 +13,8 @@
 
 std::string get_dir();
 std::vector<double> linspace(double a, double b, size_t n);
-const std::vector<double>& PnL_Hedged(const option& opt);
-double breakeven_vol(option& opt, const double& tol, double up_vol, double low_vol);
+const std::vector<double>& PnL_Hedged(const option& opt, bool BSR);
+double breakeven_vol(option& opt, const double& tol, double up_vol, double low_vol, bool BSR);
 
 int main(int argc, char* argv[])
 {
@@ -50,6 +50,7 @@ int main(int argc, char* argv[])
     
     // create a vector to store the resulting fair vols
     std::vector<double> fair_vol(strike.size());
+    std::vector<double> fair_vol_BSR(strike.size());
     
     option target_option(underlying, strike[0], mid_vol, interestrate, target_date, term, 1);
     
@@ -57,10 +58,18 @@ int main(int argc, char* argv[])
     double S0 = target_option.get_underlying_data()[0];
     std::transform(strike.begin(), strike.end(), strike.begin(), [S0](double& arg){return arg * S0;});
 
+    // breakeven volatility based on 0 delta hedging PNL
     for(size_t i = 0; i < strike.size(); i++)
     {
         target_option.modify_strike(strike[i]);
-        fair_vol[i] = breakeven_vol(target_option, tol, up_vol, low_vol);
+        fair_vol[i] = breakeven_vol(target_option, tol, up_vol, low_vol, false);
+    }
+    
+    // breakeven volatility based on 0 delta hedging PNL (calculated by Black-Scholes Robustness formula)
+    for(size_t i = 0; i < strike.size(); i++)
+    {
+        target_option.modify_strike(strike[i]);
+        fair_vol_BSR[i] = breakeven_vol(target_option, tol, up_vol, low_vol, true);
     }
     
     // graph the resulting volatility smile
@@ -92,31 +101,51 @@ std::vector<double> linspace(double a, double b, size_t n)
 }
 
 // function to calculate the daily PNL of a delta hedged option position
-const std::vector<double>& PnL_Hedged(const option& opt, const double& N)
+const std::vector<double>& PnL_Hedged(const option& opt, const double& N, bool BSR)
 {
-	std::vector<double> price = opt.BS_price();
-    std::vector<double> delta = opt.BS_delta();
-	std::vector<double> PnL_opt(price.size()-1);
-	std::vector<double> PnL_hedge(price.size()-1);
-	std::vector<double> underlying_data = opt.get_underlying_data();
-	
-	for (size_t i = 0; i < underlying_data.size() - 1; i++)
-	{
-		PnL_opt[i] = N*(price[i+1] - price [i]);
-		PnL_hedge[i] = N*delta[i]*(underlying_data[i+1] - underlying_data[i]);
-	}
+    std::vector<double> underlying = opt.get_underlying_data();
     
-    return std::transform(PnL_opt.begin(), PnL_opt.end(), PnL_hedge.begin(), PnL_opt.begin(), std::minus<double>());
+	if(BSR == false)
+    {
+        std::vector<double> price = opt.BS_price();
+        std::vector<double> delta = opt.BS_delta();
+        std::vector<double> PnL_opt(price.size()-1);
+        std::vector<double> PnL_hedge(price.size()-1);
+        
+        for(size_t i = 0; i < underlying.size() - 1; i++)
+        {
+            PnL_opt[i] = N*(price[i+1] - price [i]);
+            PnL_hedge[i] = N*delta[i]*(underlying[i+1] - underlying[i]);
+        }
+        
+        return std::transform(PnL_opt.begin(), PnL_opt.end(), PnL_hedge.begin(), PnL_opt.begin(), std::minus<double>());
+    }
+    else
+    {
+        // calculation based on Black-Scholes Robustness formula
+        std::vector<double> gamma = opt.BS_gamma();
+        double vol = opt.get_volatility();
+        double deltat = 1./252.;
+        std::vector<double> PnL(underlying.size());
+        double deltaS;
+        
+        for(size_t i = 0; i < underlying.size() - 1; i++)
+        {
+            deltaS = underlying[i+1] - underlying[i];
+            PnL[i] = N * (0.5 * gamma[i] * pow(underlying[i], 2.) * (pow(deltaS / underlying[i], 2.) - pow(vol, 2.) * deltat));
+        }
+        return PnL;
+    }
 }
 
 // function to get the breakeven vol which makes the delta hedged PNL of the option = 0
-double breakeven_vol(option& opt, const double& tol, double up_vol, double low_vol)
+double breakeven_vol(option& opt, const double& tol, double up_vol, double low_vol, bool BSR)
 {
     double mid_vol = (up_vol + low_vol) / 2.;
     opt.modify_vol(mid_vol);
     
     // compute PNL with initial mid vol
-    std::vector<double> PnL = PnL_Hedged(opt);
+    std::vector<double> PnL = PnL_Hedged(opt, 1., BSR);
     double acc_PnL = std::accumulate(PnL.begin(), PnL.end(), 0);
     
     double up_acc_PnL;
@@ -126,12 +155,12 @@ double breakeven_vol(option& opt, const double& tol, double up_vol, double low_v
     {
         // compute PNL with upper vol
         opt.modify_vol(up_vol);
-        PnL = PnL_Hedged(opt);
+        PnL = PnL_Hedged(opt, 1., BSR);
         up_acc_PnL = std::accumulate(PnL.begin(), PnL.end(), 0);
         
         // compute PNL with lower vol
         opt.modify_vol(low_vol);
-        PnL = PnL_Hedged(opt);
+        PnL = PnL_Hedged(opt, 1., BSR);
         low_acc_PnL = std::accumulate(PnL.begin(), PnL.end(), 0);
         
         // account for the case where PNLs from upper vol and lower vol have the same sign
@@ -159,7 +188,7 @@ double breakeven_vol(option& opt, const double& tol, double up_vol, double low_v
                 // compute PNL with new mid vol (midpoint of the new upper vol and lower vol)
                 mid_vol = low_vol + ((up_vol - low_vol)/2.);
                 opt.modify_vol(mid_vol);
-                const std::vector<double> PnL = PnL_Hedged(opt);
+                const std::vector<double> PnL = PnL_Hedged(opt, 1., BSR);
                 double acc_PnL = std::accumulate(PnL.begin(), PnL.end(), 0);
             }
         }

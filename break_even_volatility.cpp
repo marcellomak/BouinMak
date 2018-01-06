@@ -176,12 +176,6 @@ option::~option()
               *option methods*
 ********************************************/
 
-
-std::vector<double> option::get_underlying_data() const
-{
-	return m_underlying.get_data(m_datapos[0], m_datapos[1]);
-}
-
 std::vector<double> option::BS_price() const
 {
     std::vector<double> underlying_data = m_underlying.get_data(m_datapos[0], m_datapos[1]);
@@ -290,12 +284,17 @@ std::vector<double> option::BS_gamma() const
     return option_gamma;
 }
 
+std::vector<double> option::get_underlying_data() const
+{
+    return m_underlying.get_data(m_datapos[0], m_datapos[1]);
+}
+
 void option::modify_vol(double vol)
 {
 	m_vol = vol;
 }
 
-const double option::get_volatility()
+double option::get_volatility() const
 {
 	return m_vol;
 }

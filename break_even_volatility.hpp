@@ -69,7 +69,7 @@ public:
     std::vector<double> BS_gamma() const;
     std::vector<double> get_underlying_data() const;
     void modify_vol(double vol);
-    const double get_volatility();
+    double get_volatility() const;
     void modify_strike(double strike);
 
 private:
@@ -113,5 +113,6 @@ class PnL : public vol //maybe to change
 // function converting date string to time_t object
 time_t c_str_timet(const std::string& targetdate);
 double normalCDF(const double& x);
+double normalPDF(const double& x);
 
 #endif
