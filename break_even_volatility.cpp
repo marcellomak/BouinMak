@@ -177,14 +177,9 @@ option::~option()
 ********************************************/
 
 
-std::vector<double> option::get_underlying_data(const ptrdiff_t datapos_1, const ptrdiff_t datapos_2) const
+std::vector<double> option::get_underlying_data() const
 {
 	return m_underlying.get_data(m_datapos[0], m_datapos[1]);
-}
-
-std::vector<ptrdiff_t> option::get_datapos() const;
-{
-	return m_datapos;
 }
 
 std::vector<double> option::BS_price() const
