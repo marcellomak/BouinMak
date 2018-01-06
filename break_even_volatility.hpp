@@ -65,7 +65,7 @@ public:
     // daily price and delta of the option
     std::vector<double> BS_price() const;
     std::vector<double> BS_delta() const;
-    void modify_vol(const double& vol);
+    void modify_vol(double vol);
     const double get_volatility();
     void modify_strike(double strike);
 
@@ -74,7 +74,6 @@ private:
     int m_type;
     double m_strike;
     double m_vol;
-    time_series m_rate;
     std::string m_maturity;
     size_t m_term_day;
     std::vector<ptrdiff_t> m_datapos;
@@ -83,13 +82,13 @@ private:
 protected:
 };
 
+/*
 class portfolio
 {
 public:
 private:
 };
 
-/*
 class PnL : public vol //maybe to change
 {
     public:

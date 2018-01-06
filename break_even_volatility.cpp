@@ -111,7 +111,7 @@ std::vector<time_t> time_series::get_date(const ptrdiff_t& startpos, const ptrdi
 ********************************************/
 
 option::option(const time_series& underlying, const double& strike, const double& vol, const time_series& rate, const std::string& maturity, const size_t& term_day, const int& type)
-    : m_underlying(underlying), m_strike(strike), m_vol(vol), m_rate(rate), m_maturity(maturity), m_term_day(term_day), m_type(type)
+    : m_underlying(underlying), m_strike(strike), m_vol(vol), m_maturity(maturity), m_term_day(term_day), m_type(type)
 {
     std::cout<<"Option Constructor"<<std::endl;
 
@@ -121,8 +121,8 @@ option::option(const time_series& underlying, const double& strike, const double
     // create a vector of interest rate data with dates match with those of the underlying data
     std::vector<time_t> data_date = m_underlying.get_date(m_datapos[0], m_datapos[1]); // get the dates of the target underlying data
     
-    std::vector<time_t> rate_date = m_rate.get_date(); // get the dates for the whole interest rate series
-    std::vector<double> rate_data = m_rate.get_data(); // get the whole interest rate series
+    std::vector<time_t> rate_date = rate.get_date(); // get the dates for the whole interest rate series
+    std::vector<double> rate_data = rate.get_data(); // get the whole interest rate series
     
     ptrdiff_t target_pos;
     time_t target_date;
@@ -180,13 +180,15 @@ std::vector<double> option::BS_price() const
 {
     std::vector<double> underlying_data = m_underlying.get_data(m_datapos[0], m_datapos[1]);
 
-    if m_type = 1
+    int sign;
+    
+    if(m_type == 1)
     {
-	    int sign = 1;
+	    sign = 1;
     }
-    else if m_type = 0
+    else if(m_type == 0)
     {
-	    int sign = -1;
+	    sign = -1;
     }
 	
     // create a vector to store time to maturity in year (based on trading days)
@@ -199,18 +201,18 @@ std::vector<double> option::BS_price() const
     double price;
     double d2;
     
-    for(int i = 0; i < underlying_data.size(); i++) // calculate the option price on each trading day
+    for(size_t i = 0; i < underlying_data.size(); i++) // calculate the option price on each trading day
     {
         if(i != underlying_data.size() - 1) // option price before maturity
         {
             d1 = 1. / (m_vol * sqrt(time_to_maturity[i])) * (log(underlying_data[i] / m_strike) + (m_fixedrate[i] + pow(m_vol, 2.) / 2.) * time_to_maturity[i]);
-	    d2 = d1 - m_vol * sqrt(time_to_maturity[i])
-            price = sign(normalCDF(sign*d1) * underlying_data[i] - normalCDF(sign*d2) * m_strike * exp(-m_fixedrate[i] * time_to_maturity[i]));
+            d2 = d1 - m_vol * sqrt(time_to_maturity[i]);
+            price = sign * (normalCDF(sign * d1) * underlying_data[i] - sign * normalCDF(sign * d2) * m_strike * exp(-m_fixedrate[i] * time_to_maturity[i]));
             option_price.push_back(price);
         }
         else // call option payoff at maturity
         {
-            price = std::max((sign*underlying_data[i] - m_strike), 0.);
+            price = std::max((sign * underlying_data[i] - m_strike), 0.);
             option_price.push_back(price);
         }
     }
@@ -239,7 +241,7 @@ std::vector<double> option::BS_delta() const
             d1 = 1. / (m_vol * sqrt(time_to_maturity[i])) * (log(underlying_data[i] / m_strike) + (m_fixedrate[i] + pow(m_vol, 2.) / 2.) * time_to_maturity[i]);
             delta = normalCDF(d1);
 	    
-	    if m_type = 0
+	    if(m_type == 0)
 	    {
 		    delta = delta - 1;
 	    }
@@ -256,7 +258,7 @@ std::vector<double> option::BS_delta() const
     return option_delta;
 }
 
-void option::modify_vol(const double& vol)
+void option::modify_vol(double vol)
 {
 	m_vol = vol;
 }
@@ -266,7 +268,7 @@ const double option::get_volatility()
 	return m_vol;
 }
 
-void modify_strike(double strike)
+void option::modify_strike(double strike)
 {
     m_strike = strike;
 }

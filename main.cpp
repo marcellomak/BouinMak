@@ -9,10 +9,10 @@
 #define get_current_dir getcwd
 #endif
 
-std:string get_dir();
+std::string get_dir();
 std::vector<double> linspace(double a, double b, size_t n);
-const std::vector<double> PnL_Hedged(const option& opt);
-double Fair_vol(const option& opt, const double& tol, const double& up_vol, const double& low_vol);
+const std::vector<double>& PnL_Hedged(const option& opt);
+double breakeven_vol(option& opt, const double& tol, double up_vol, double low_vol);
 
 int main(int argc, char* argv[])
 {
@@ -31,13 +31,13 @@ int main(int argc, char* argv[])
     // create a vector of strike level for creating the volatility smile
     double low_strike = 0.2;
     double up_strike = 1.8;
-    std::vector<double> strike = linspace(low_strike, up_strike, (up_strike - low_strike) * 1000) // every 0.1% strike level
+    std::vector<double> strike = linspace(low_strike, up_strike, (up_strike - low_strike) * 1000); // every 0.1% strike level
     
     // target term
     size_t term = 365;
     
     // target date
-    target_date = "18/12/2017"
+    std::string target_date = "18/12/2017";
     
     // vol initial bound
     double up_vol = 0.01;
@@ -48,12 +48,13 @@ int main(int argc, char* argv[])
     double tol = 0.0001;
     
     // create a vector to store the resulting fair vols
-    std::vector<double> fairvol(strike.size());
+    std::vector<double> fair_vol(strike.size());
     
     option target_option(underlying, strike[0], mid_vol, interestrate, target_date, term, 1);
     
-    for(int i = 0; i < strike.size(); i++)
+    for(size_t i = 0; i < strike.size(); i++)
     {
+        target_option.modify_strike(strike[i]);
         fair_vol[i] = breakeven_vol(target_option, tol, up_vol, low_vol);
     }
     
@@ -94,7 +95,7 @@ int main(int argc, char* argv[])
 }
 
 // function to get current directory
-std:string get_dir()
+std::string get_dir()
 {
     char buff[FILENAME_MAX];
     get_current_dir(buff, FILENAME_MAX);
@@ -119,19 +120,19 @@ std::vector<double> linspace(double a, double b, size_t n)
 // function to calculate the daily PNL of a delta hedged option position
 const std::vector<double>& PnL_Hedged(const option& opt)
 {
-    double price = opt.BS_price();
-    double delta = opt.BS_delta();
-    return std::transform(price.begin(),price.end(), delta.begin(), price.begin(), std::minus<double>());
+    //double price = opt.BS_price();
+    //double delta = opt.BS_delta();
+    //return std::transform(price.begin(),price.end(), delta.begin(), price.begin(), std::minus<double>());
 }
 
 // function to get the breakeven vol which makes the delta hedged PNL of the option = 0
-double breakeven_vol(const option& opt, const double& tol, const double& up_vol, const double& low_vol)
+double breakeven_vol(option& opt, const double& tol, double up_vol, double low_vol)
 {
     double mid_vol = (up_vol + low_vol) / 2.;
     opt.modify_vol(mid_vol);
     
     // compute PNL with initial mid vol
-    const std::vector<double> PnL = PnL_Hedged(opt);
+    std::vector<double> PnL = PnL_Hedged(opt);
     double acc_PnL = std::accumulate(PnL.begin(), PnL.end(), 0);
     
     double up_acc_PnL;
@@ -159,7 +160,7 @@ double breakeven_vol(const option& opt, const double& tol, const double& up_vol,
         {
             while(std::abs(acc_PnL) > tol)
             {
-                if (acc_PnL * up_acc_PNL) > 0
+                if(acc_PnL * up_acc_PnL > 0)
                 {
                     // if PNL with mid vol has the same sign as the PNL with upper vol, replace upper vol with current mid vol
                     up_vol = mid_vol;
