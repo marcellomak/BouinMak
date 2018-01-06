@@ -127,7 +127,7 @@ option::option(const time_series& underlying, const double& strike, const double
     ptrdiff_t target_pos;
     time_t target_date;
     
-    for(int i = 0; i < data_date.size(); i++) // loop through all the dates of target underlying data to find the corresponding rates
+    for(size_t i = 0; i < data_date.size(); i++) // loop through all the dates of target underlying data to find the corresponding rates
     {
         int day_count = 0;
         bool target_found = false;
@@ -244,7 +244,7 @@ std::vector<double> option::BS_delta() const
     double d1;
     double delta;
     
-    for(int i = 0; i < underlying_data.size(); i++) // calculate the option delta on each trading day
+    for(size_t i = 0; i < underlying_data.size(); i++) // calculate the option delta on each trading day
     {
 
         if(i != underlying_data.size() - 1) // option delta before maturity

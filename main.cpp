@@ -18,7 +18,6 @@ double breakeven_vol(option& opt, const double& tol, double up_vol, double low_v
 
 int main(int argc, char* argv[])
 {
-    
     // enter the file name of underlying and interest rate data
     std::string underlying_filename("");
     std::string interestrate_filename(""); /* comment this line for constant rate */
@@ -54,6 +53,10 @@ int main(int argc, char* argv[])
     
     option target_option(underlying, strike[0], mid_vol, interestrate, target_date, term, 1);
     
+    // transform the strike vector from percentage to price level
+    double S0 = target_option.get_underlying_data()[0];
+    std::transform(strike.begin(), strike.end(), strike.begin(), [S0](double& arg){return arg * S0;});
+
     for(size_t i = 0; i < strike.size(); i++)
     {
         target_option.modify_strike(strike[i]);
@@ -111,7 +114,7 @@ std::vector<double> linspace(double a, double b, size_t n)
     std::vector<double> result(n + 1);
     double step = (b - a) / n;
     
-    for(int i = 0; i <= n ; i++)
+    for(size_t i = 0; i <= n ; i++)
     {
         result[i] = a + i * step;
     }
@@ -123,7 +126,7 @@ std::vector<double> linspace(double a, double b, size_t n)
 const std::vector<double>& PnL_Hedged(const option& opt)
 {
 	std::vector<double> price = opt.BS_price();
-        std::vector<double> delta = opt.BS_delta();
+    std::vector<double> delta = opt.BS_delta();
 	std::vector<ptrdiff_t> data_pos = opt.get_datapos();
 	std::vector<double> underlying_data = opt.get_underlying_data(data_pos[0], data_pos[1]);
 	std::vector<double> delta_dollar = std::transform(delta.begin(), delta.end(), underlying_data.begin(), delta.begin(), std::multiplies<double>());
