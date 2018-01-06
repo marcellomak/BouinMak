@@ -125,7 +125,8 @@ const std::vector<double>& PnL_Hedged(const option& opt, const double& N, bool B
             PnL_hedge[i] = N*delta[i]*(underlying[i+1] - underlying[i]);
         }
         
-        return std::transform(PnL_opt.begin(), PnL_opt.end(), PnL_hedge.begin(), PnL_opt.begin(), std::minus<double>());
+        std::transform(PnL_opt.begin(), PnL_opt.end(), PnL_hedge.begin(), PnL_opt.begin(), std::minus<double>());
+        return PnL_opt;
     }
     else
     {
