@@ -4,7 +4,7 @@
 #include <numeric>
 #include <fstream>
 #include <stdlib.h> // I THINK IT IS FOR GNUPLOT
-// #define WINDOWS  /* uncomment this line to use it for windows.*/
+#define WINDOWS  /* uncomment this line to use it for windows.*/
 #ifdef WINDOWS
 #include <direct.h>
 #define get_current_dir _getcwd
@@ -15,8 +15,8 @@
 
 std::string get_dir();
 std::vector<double> linspace(double a, double b, size_t n);
-const std::vector<double>& PnL_Hedged(const option& opt, bool BSR);
-double breakeven_vol(option& opt, const double& tol, double up_vol, double low_vol, bool BSR);
+std::vector<double>& PnL_Hedged(const option& opt, bool BSR);
+double breakeven_vol(option opt, const double& tol, double up_vol, double low_vol, bool BSR);
 
 int main(int argc, char* argv[])
 {
@@ -43,8 +43,8 @@ int main(int argc, char* argv[])
     std::string target_date = "18/12/2017";
     
     // vol initial bound
-    double up_vol = 0.01;
-    double low_vol = 2.;
+    double up_vol = 0.5;
+    double low_vol = 0.002;
     double mid_vol = (up_vol + low_vol) / 2.;
     
     // tolerance
@@ -80,6 +80,12 @@ int main(int argc, char* argv[])
     f << strike << "\t" << fair_vol << std::endl;
     f.close();
     std::system("gnuplot break_vol.dat");*/ //to test
+    
+    for (size_t i = 0; i < fair_vol.size(); i++)
+    {
+    	std::cout<<"Fair vol is "<< fair_vol[i]<< "for the strike" << strike[i] << std::endl;
+    	std::cout<<"Fair vol BSR is "<< fair_vol_BSR[i] << "for the strike" << strike[i] << std::endl;
+    }
 
     return 0;
 }
@@ -108,7 +114,7 @@ std::vector<double> linspace(double a, double b, size_t n)
 }
 
 // function to calculate the daily PNL of a delta hedged option position
-const std::vector<double>& PnL_Hedged(const option& opt, const double& N, bool BSR)
+std::vector<double>& PnL_Hedged(option opt, double N, bool BSR)
 {
     std::vector<double> underlying = opt.get_underlying_data();
     
@@ -147,29 +153,29 @@ const std::vector<double>& PnL_Hedged(const option& opt, const double& N, bool B
 }
 
 // function to get the breakeven vol which makes the delta hedged PNL of the option = 0
-double breakeven_vol(option& opt, const double& tol, double up_vol, double low_vol, bool BSR)
+double breakeven_vol(option opt, const double& tol, double up_vol, double low_vol, bool BSR)
 {
     double mid_vol = (up_vol + low_vol) / 2.;
     opt.modify_vol(mid_vol);
     
     // compute PNL with initial mid vol
     std::vector<double> PnL = PnL_Hedged(opt, 1., BSR);
-    double acc_PnL = std::accumulate(PnL.begin(), PnL.end(), 0);
+    double acc_PnL = std::for_each(PnL.begin(), PnL.end(), [&acc_PnL](double arg){acc_PnL += arg;});
     
     double up_acc_PnL;
     double low_acc_PnL;
     
-    if(std::abs(acc_PnL) > tol)
+    if(std::fabs(acc_PnL) > tol)
     {
         // compute PNL with upper vol
         opt.modify_vol(up_vol);
         PnL = PnL_Hedged(opt, 1., BSR);
-        up_acc_PnL = std::accumulate(PnL.begin(), PnL.end(), 0);
+        up_acc_PnL = std::for_each(PnL.begin(), PnL.end(), [&up_acc_PnL](double arg){up_acc_PnL += arg;});
         
         // compute PNL with lower vol
         opt.modify_vol(low_vol);
         PnL = PnL_Hedged(opt, 1., BSR);
-        low_acc_PnL = std::accumulate(PnL.begin(), PnL.end(), 0);
+        low_acc_PnL = std::for_each(PnL.begin(), PnL.end(), [&low_acc_PnL](double arg){low_acc_PnL += arg;});
         
         // account for the case where PNLs from upper vol and lower vol have the same sign
         if(up_acc_PnL * low_acc_PnL > 0)
@@ -179,7 +185,7 @@ double breakeven_vol(option& opt, const double& tol, double up_vol, double low_v
         }
         else
         {
-            while(std::abs(acc_PnL) > tol)
+            while(std::fabs(acc_PnL) > tol)
             {
                 if(acc_PnL * up_acc_PnL > 0)
                 {
@@ -196,8 +202,8 @@ double breakeven_vol(option& opt, const double& tol, double up_vol, double low_v
                 // compute PNL with new mid vol (midpoint of the new upper vol and lower vol)
                 mid_vol = low_vol + ((up_vol - low_vol)/2.);
                 opt.modify_vol(mid_vol);
-                const std::vector<double> PnL = PnL_Hedged(opt, 1., BSR);
-                double acc_PnL = std::accumulate(PnL.begin(), PnL.end(), 0);
+                PnL = PnL_Hedged(opt, 1., BSR);
+                acc_PnL = std::for_each(PnL.begin(), PnL.end(), [&acc_PnL](double arg){acc_PnL += arg;});
             }
         }
     }

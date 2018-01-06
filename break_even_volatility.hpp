@@ -41,25 +41,13 @@ private:
     std::vector<double> m_data;
 };
 
-/*
-class vol // maybe to delete
-{
-    public:
-        explicit vol(const size_t mat, const double strike, const std::string underlying);
-        virtual ~vol();
-
-    private:
-    protected:
-
-};
-*/
 
 class option
 {
 public:
     // constructor and destructor
-    option(const time_series& underlying, const double& strike, const double& vol, const time_series& rate, const std::string& maturity, const size_t& term_day, const int& type); // type: 1 for call, 0 for put
-    option(const time_series& underlying, const double& strike, const double& vol, const double& rate, const std::string& maturity, const size_t& term_day, const int& type); // type: 1 for call, 0 for put
+    option(const time_series& underlying, double& strike, double& vol, const time_series& rate, const std::string& maturity, const size_t& term_day, const int& type); // type: 1 for call, 0 for put
+    option(const time_series& underlying, double& strike, double& vol, const double& rate, const std::string& maturity, const size_t& term_day, const int& type); // type: 1 for call, 0 for put
 
     ~option();
 
@@ -84,31 +72,6 @@ private:
 
 protected:
 };
-
-/*
-class portfolio
-{
-public:
-private:
-};
-
-class PnL : public vol //maybe to change
-{
-    public:
-
-        //constructor and destructor
-        PnL(const std::vector<double>& underlying, const double& strike, const double& vol, const std::vector<double>& rate ,const size_t& mat);
-        ~PnL();
-
-        //computation of the PnL, use of the pricers formulas
-        const Hedged_PnL(const std::vector<double>& underlying, const double& strike, const double& vol, const std::vector<double>& rate, const size_t& mat) const;
-        //maybe have a get_vol method here, since we will find the fair vol here
-
-    
-    private:
-    protected:
-}
-*/
 
 // function converting date string to time_t object
 time_t c_str_timet(const std::string& targetdate);
