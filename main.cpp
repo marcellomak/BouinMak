@@ -2,6 +2,8 @@
 #include <stdio.h> // include the FILENAME_MAX
 #include <functional>
 #include <numeric>
+#include <fstream>
+#include <stdlib.h> // I THINK IT IS FOR GNUPLOT
 // #define WINDOWS  /* uncomment this line to use it for windows.*/
 #ifdef WINDOWS
 #include <direct.h>
@@ -63,8 +65,13 @@ int main(int argc, char* argv[])
         fair_vol[i] = breakeven_vol(target_option, tol, up_vol, low_vol);
     }
     
-    // graph the resulting volatility smile
-    
+    /*/ graph the resulting volatility smile
+
+    std::ofstream f("break_vol.dat");
+    f << strike << "\t" << fair_vol << std::endl;
+    f.close();
+    std::system("gnuplot break_vol.dat");*/ //to test
+
     return 0;
 }
 
@@ -95,7 +102,7 @@ std::vector<double> linspace(double a, double b, size_t n)
 const std::vector<double>& PnL_Hedged(const option& opt, const double& N)
 {
 	std::vector<double> price = opt.BS_price();
-    std::vector<double> delta = opt.BS_delta();
+        std::vector<double> delta = opt.BS_delta();
 	std::vector<double> PnL_opt(price.size()-1);
 	std::vector<double> PnL_hedge(price.size()-1);
 	std::vector<double> underlying_data = opt.get_underlying_data();
