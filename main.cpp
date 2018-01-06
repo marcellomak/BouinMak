@@ -21,14 +21,14 @@ double breakeven_vol(option& opt, const double& tol, double up_vol, double low_v
 int main(int argc, char* argv[])
 {
     // enter the file name of underlying and interest rate data
-    std::string underlying_filename("");
-    std::string interestrate_filename(""); /* comment this line for constant rate */
+    std::string underlying_filename("S&P500.csv");
+    std::string interestrate_filename("LIBOR.csv"); /* comment this line for constant rate */
     
     // read underlying and interest rate data
     std::string current_dir = get_dir();
     current_dir.erase(current_dir.size() - 5); // remove "build" from the directory
     time_series underlying(current_dir + underlying_filename, "S&P500");
-    time_series interestrate(current_dir + interestrate_filename, "TBill"); /* comment this line for constant rate */
+    time_series interestrate(current_dir + interestrate_filename, "LIBOR"); /* comment this line for constant rate */
     // double rate = 0.01; /* uncomment this line for constant rate */
     
     // create a vector of strike level for creating the volatility smile
