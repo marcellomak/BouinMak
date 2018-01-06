@@ -207,9 +207,8 @@ std::vector<double> option::BS_price() const
     std::iota(time_to_maturity.begin(), time_to_maturity.end(), 1); // fill the vector with increasing number from 1,2,3,...
     std::transform(time_to_maturity.begin(), time_to_maturity.end(), time_to_maturity.begin(), [underlying_data](double& arg){return (underlying_data.size() - arg) / 252.;}); // revert the vector from ascending order to descending order and change the unit to year
     
-    std::vector<double> option_price;
+    std::vector<double> option_price(underlying_data.size());
     double d1;
-    double price;
     double d2;
     
     for(size_t i = 0; i < underlying_data.size(); i++) // calculate the option price on each trading day
@@ -218,13 +217,11 @@ std::vector<double> option::BS_price() const
         {
             d1 = 1. / (m_vol * sqrt(time_to_maturity[i])) * (log(underlying_data[i] / m_strike) + (m_fixedrate[i] + pow(m_vol, 2.) / 2.) * time_to_maturity[i]);
             d2 = d1 - m_vol * sqrt(time_to_maturity[i]);
-            price = sign * (normalCDF(sign * d1) * underlying_data[i] - sign * normalCDF(sign * d2) * m_strike * exp(-m_fixedrate[i] * time_to_maturity[i]));
-            option_price.push_back(price);
+            option_price[i] = sign * (normalCDF(sign * d1) * underlying_data[i] - sign * normalCDF(sign * d2) * m_strike * exp(-m_fixedrate[i] * time_to_maturity[i]));
         }
         else // call option payoff at maturity
         {
-            price = std::max((sign * underlying_data[i] - m_strike), 0.);
-            option_price.push_back(price);
+            option_price[i] = std::max((sign * underlying_data[i] - m_strike), 0.);
         }
     }
     
@@ -240,7 +237,7 @@ std::vector<double> option::BS_delta() const
     std::iota(time_to_maturity.begin(), time_to_maturity.end(), 1); // fill the vector with increasing number from 1,2,3,...
     std::transform(time_to_maturity.begin(), time_to_maturity.end(), time_to_maturity.begin(), [underlying_data](double& arg){return (underlying_data.size() - arg) / 252.;}); // revert the vector from ascending order to descending order and change the unit to year
     
-    std::vector<double> option_delta;
+    std::vector<double> option_delta(underlying_data.size());
     double d1;
     double delta;
     
@@ -252,21 +249,36 @@ std::vector<double> option::BS_delta() const
             d1 = 1. / (m_vol * sqrt(time_to_maturity[i])) * (log(underlying_data[i] / m_strike) + (m_fixedrate[i] + pow(m_vol, 2.) / 2.) * time_to_maturity[i]);
             delta = normalCDF(d1);
 	    
-	    if(m_type == 0)
-	    {
-		    delta = delta - 1;
-	    }
+            if(m_type == 0)
+            {
+                delta = delta - 1;
+            }
 
-            option_delta.push_back(delta);
+            option_delta[i] = delta;
 	    
         }
         else // delta at maturity
         {
-            option_delta.push_back(0);
+            option_delta[i] = 0;
         }
     }
     
     return option_delta;
+}
+
+std::vector<double> option::BS_gamma() const
+{
+    std::vector<double> underlying_data = m_underlying.get_data(m_datapos[0], m_datapos[1]);
+    
+    // create a vector to store time to maturity in year (based on trading days)
+    std::vector<double> time_to_maturity(underlying_data.size());
+    std::iota(time_to_maturity.begin(), time_to_maturity.end(), 1); // fill the vector with increasing number from 1,2,3,...
+    std::transform(time_to_maturity.begin(), time_to_maturity.end(), time_to_maturity.begin(), [underlying_data](double& arg){return (underlying_data.size() - arg) / 252.;}); // revert the vector from ascending order to descending order and change the unit to year
+    
+    std::vector<double> option_gamma(underlying_data.size());
+    double d1;
+
+    
 }
 
 void option::modify_vol(double vol)
