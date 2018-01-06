@@ -1,13 +1,13 @@
 #include "break_even_volatility.hpp"
 #include <stdio.h> // include the FILENAME_MAX
+#include <functional>
+#include <numeric>
 // #define WINDOWS  /* uncomment this line to use it for windows.*/
 #ifdef WINDOWS
 #include <direct.h>
 #define get_current_dir _getcwd
 #else
 #include <unistd.h>
-#include <functional>
-#include <numeric>
 #define get_current_dir getcwd
 #endif
 
@@ -66,37 +66,6 @@ int main(int argc, char* argv[])
     // graph the resulting volatility smile
     
     return 0;
-    /*
-    std::cout << "TEST Class time series" << std::endl;
-    time_series hihi("", "EuroStoxx 50");
-    std::cout << hihi.get_dataname() << std::endl;
-    std::vector<time_t> datadate = hihi.get_date();
-    std::cout << datadate[998] << std::endl;
-
-    time_t targett = c_str_timet("18/12/2017");
-    std::cout << targett << std::endl;
-
-    std::vector<ptrdiff_t> temp = hihi.get_datapos("18/12/2017", 30);
-
-    std::cout << temp[0] << " and " << temp[1] <<std::endl;
-    std::vector<double> data = hihi.get_data(temp[0], temp[1]);
-    std::cout << data[0] << " and " << data[data.size() - 1] << std::endl;
-
-    std::cout << std::endl;
-    std::cout << "TEST Class call option" << std::endl;
-
-    time_series underlying("", "testunderlying");
-    time_series rate("", "testrate");
-
-    call_option option1(underlying, 100., 0.2, rate, "18/12/2017", 30);
-    std::vector<double> optionprice = option1.BS_price();
-    std::vector<double> optiondelta = option1.BS_delta();
-
-    for(int i = 0; i < optionprice.size(); i++)
-    {
-        std::cout << optionprice[i] << " and " << optiondelta[i] << std::endl;
-    }
-    */
 }
 
 // function to get current directory
@@ -123,14 +92,21 @@ std::vector<double> linspace(double a, double b, size_t n)
 }
 
 // function to calculate the daily PNL of a delta hedged option position
-const std::vector<double>& PnL_Hedged(const option& opt)
+const std::vector<double>& PnL_Hedged(const option& opt, const double& N)
 {
 	std::vector<double> price = opt.BS_price();
     std::vector<double> delta = opt.BS_delta();
-	std::vector<ptrdiff_t> data_pos = opt.get_datapos();
-	std::vector<double> underlying_data = opt.get_underlying_data(data_pos[0], data_pos[1]);
-	std::vector<double> delta_dollar = std::transform(delta.begin(), delta.end(), underlying_data.begin(), delta.begin(), std::multiplies<double>());
-        return std::transform(price.begin(),price.end(), delta_dollar.begin(), price.begin(), std::minus<double>());
+	std::vector<double> PnL_opt(price.size()-1);
+	std::vector<double> PnL_hedge(price.size()-1);
+	std::vector<double> underlying_data = opt.get_underlying_data();
+	
+	for (size_t i = 0; i < underlying_data.size() - 1; i++)
+	{
+		PnL_opt[i] = N*(price[i+1] - price [i]);
+		PnL_hedge[i] = N*delta[i]*(underlying_data[i+1] - underlying_data[i]);
+	}
+    
+    return std::transform(PnL_opt.begin(), PnL_opt.end(), PnL_hedge.begin(), PnL_opt.begin(), std::minus<double>());
 }
 
 // function to get the breakeven vol which makes the delta hedged PNL of the option = 0
