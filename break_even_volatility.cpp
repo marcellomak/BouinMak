@@ -29,9 +29,8 @@ time_series::~time_series()
 {
 }
 
-
 /*******************************************
-          *time series methods*
+           *time series methods*
 ********************************************/
 
 // method to get private data member m_dataname
@@ -107,7 +106,6 @@ std::vector<time_t> time_series::get_date(const ptrdiff_t& startpos, const ptrdi
 }
 
 
-
 /*******************************************
      *option constructor & destructor*
 ********************************************/
@@ -175,7 +173,7 @@ option::~option()
 }
 
 /*******************************************
-          *option methods*
+              *option methods*
 ********************************************/
 
 std::vector<double> option::BS_price() const

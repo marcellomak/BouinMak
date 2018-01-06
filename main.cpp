@@ -9,42 +9,10 @@
 #define get_current_dir getcwd
 #endif
 
-const std::vector<double> PnL_Hedged(const option& opt)
-{
-	double price = opt.BS_price();
-	double delta = opt.BS_delta();
-	return std::transform(price.begin(),price.end(), delta.begin(), price.begin(), std::minus<double>());
-}
-
-const std::vector<double> Fair_vol(const option& opt, const double& tol)
-{
-	const std::vector<double> PnL = PnL_Hedged(opt);
-	double res = std::accumulate(PnL.begin(), PnL.end(),0);
-	
-	double up_vol = opt.get_volatility() + 20./100.;
-	double low_vol = 0.;
-	
-	while (res>tol)
-	{
-		double mid_vol = (up_vol + low_vol)/2.;
-		opt.modify_vol(mid_vol);
-		PnL = PnL_Hedged(opt);
-	        res = std::accumulate(PnL.begin(), PnL.end(),0);
-		if res > 0
-		{
-			up_vol = mid_vol;
-		}
-		else if res < 0
-		{
-			low_vol = mid_vol;
-		}
-	}
-
-	return res;
-}
-
 std:string get_dir();
 std::vector<double> linspace(double a, double b, size_t n);
+const std::vector<double> PnL_Hedged(const option& opt);
+double Fair_vol(const option& opt, const double& tol, const double& up_vol, const double& low_vol);
 
 int main(int argc, char* argv[])
 {
@@ -72,12 +40,24 @@ int main(int argc, char* argv[])
     target_date = "18/12/2017"
     
     // vol initial bound
-    double up_col = 0.01;
+    double up_vol = 0.01;
     double low_vol = 2.;
     double mid_vol = (up_vol + low_vol) / 2.;
     
+    // tolerance
+    double tol = 0.0001;
+    
+    // create a vector to store the resulting fair vols
+    std::vector<double> fairvol(strike.size());
+    
     option target_option(underlying, strike[0], mid_vol, interestrate, target_date, term, 1);
     
+    for(int i = 0; i < strike.size(); i++)
+    {
+        fair_vol[i] = breakeven_vol(target_option, tol, up_vol, low_vol);
+    }
+    
+    // graph the resulting volatility smile
     
     return 0;
     /*
@@ -113,7 +93,7 @@ int main(int argc, char* argv[])
     */
 }
 
-// a function to get current directory
+// function to get current directory
 std:string get_dir()
 {
     char buff[FILENAME_MAX];
@@ -122,6 +102,7 @@ std:string get_dir()
     return current_dir;
 }
 
+// function to generate a equally spaced vector with bound [a, b] and size n+1
 std::vector<double> linspace(double a, double b, size_t n)
 {
     std::vector<double> result(n + 1);
@@ -135,6 +116,71 @@ std::vector<double> linspace(double a, double b, size_t n)
     return result;
 }
 
+// function to calculate the daily PNL of a delta hedged option position
+const std::vector<double>& PnL_Hedged(const option& opt)
+{
+    double price = opt.BS_price();
+    double delta = opt.BS_delta();
+    return std::transform(price.begin(),price.end(), delta.begin(), price.begin(), std::minus<double>());
+}
+
+// function to get the breakeven vol which makes the delta hedged PNL of the option = 0
+double breakeven_vol(const option& opt, const double& tol, const double& up_vol, const double& low_vol)
+{
+    double mid_vol = (up_vol + low_vol) / 2.;
+    opt.modify_vol(mid_vol);
+    
+    // compute PNL with initial mid vol
+    const std::vector<double> PnL = PnL_Hedged(opt);
+    double acc_PnL = std::accumulate(PnL.begin(), PnL.end(), 0);
+    
+    double up_acc_PnL;
+    double low_acc_PnL;
+    
+    if(std::abs(acc_PnL) > tol)
+    {
+        // compute PNL with upper vol
+        opt.modify_vol(up_vol);
+        PnL = PnL_Hedged(opt);
+        up_acc_PnL = std::accumulate(PnL.begin(), PnL.end(), 0);
+        
+        // compute PNL with lower vol
+        opt.modify_vol(low_vol);
+        PnL = PnL_Hedged(opt);
+        low_acc_PnL = std::accumulate(PnL.begin(), PnL.end(), 0);
+        
+        // account for the case where PNLs from upper vol and lower vol have the same sign
+        if(up_acc_PnL * low_acc_PnL > 0)
+        {
+            std::cout << "No solution can be found." << std::endl;
+            mid_vol = 0;
+        }
+        else
+        {
+            while(std::abs(acc_PnL) > tol)
+            {
+                if (acc_PnL * up_acc_PNL) > 0
+                {
+                    // if PNL with mid vol has the same sign as the PNL with upper vol, replace upper vol with current mid vol
+                    up_vol = mid_vol;
+                    up_acc_PnL = acc_PnL; // replace the PNL with upper vol by the PNL with current mid vol
+                }
+                else
+                {
+                    // if PNL with mid vol has the same sign as the PNL with lower vol, replace lower vol with current mid vol
+                    low_vol = mid_vol;
+                    low_acc_PnL = acc_PnL; // replace the PNL with upper vol by the PNL with current mid vol
+                }
+                // compute PNL with new mid vol (midpoint of the new upper vol and lower vol)
+                mid_vol = (up_vol + low_vol) / 2.;
+                opt.modify_vol(mid_vol);
+                const std::vector<double> PnL = PnL_Hedged(opt);
+                double acc_PnL = std::accumulate(PnL.begin(), PnL.end(), 0);
+            }
+        }
+    }
+    return mid_vol;
+}
 /*
 EuroStoxx 50
 1513551600
