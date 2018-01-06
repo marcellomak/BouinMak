@@ -6,6 +6,8 @@
 #define get_current_dir _getcwd
 #else
 #include <unistd.h>
+#include <functional>
+#include <numeric>
 #define get_current_dir getcwd
 #endif
 
@@ -120,9 +122,12 @@ std::vector<double> linspace(double a, double b, size_t n)
 // function to calculate the daily PNL of a delta hedged option position
 const std::vector<double>& PnL_Hedged(const option& opt)
 {
-    //double price = opt.BS_price();
-    //double delta = opt.BS_delta();
-    //return std::transform(price.begin(),price.end(), delta.begin(), price.begin(), std::minus<double>());
+	std::vector<double> price = opt.BS_price();
+        std::vector<double> delta = opt.BS_delta();
+	std::vector<ptrdiff_t> data_pos = opt.get_datapos();
+	std::vector<double> underlying_data = opt.get_underlying_data(data_pos[0], data_pos[1]);
+	std::vector<double> delta_dollar = std::transform(delta.begin(), delta.end(), underlying_data.begin(), delta.begin(), std::multiplies<double>());
+        return std::transform(price.begin(),price.end(), delta_dollar.begin(), price.begin(), std::minus<double>());
 }
 
 // function to get the breakeven vol which makes the delta hedged PNL of the option = 0
