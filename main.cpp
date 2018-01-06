@@ -120,14 +120,20 @@ std::vector<double> linspace(double a, double b, size_t n)
 }
 
 // function to calculate the daily PNL of a delta hedged option position
-const std::vector<double>& PnL_Hedged(const option& opt)
+const std::vector<double>& PnL_Hedged(const option& opt, const double& N)
 {
 	std::vector<double> price = opt.BS_price();
         std::vector<double> delta = opt.BS_delta();
-	std::vector<ptrdiff_t> data_pos = opt.get_datapos();
-	std::vector<double> underlying_data = opt.get_underlying_data(data_pos[0], data_pos[1]);
-	std::vector<double> delta_dollar = std::transform(delta.begin(), delta.end(), underlying_data.begin(), delta.begin(), std::multiplies<double>());
-        return std::transform(price.begin(),price.end(), delta_dollar.begin(), price.begin(), std::minus<double>());
+	std::vector<double> PnL_opt(price.size()-1);
+	std::vector<double> PnL_hedge(price.size()-1);
+	std::vector<double> underlying_data = opt.get_underlying_data();
+	
+	for (size_t i = 0; i < underlying_data.size() - 1; i++)
+	{
+		PnL_opt[i] = N*(price[i+1] - price [i]);
+		PnL_hedge[i] = N*delta[i]*(underlying_data[i+1] - underlying_data[i]);
+	}
+        return std::transform(PnL_opt.begin(), PnL_opt.end(), PnL_hedge.begin(), PnL_opt.begin(), std::minus<double>());
 }
 
 // function to get the breakeven vol which makes the delta hedged PNL of the option = 0

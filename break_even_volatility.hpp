@@ -63,13 +63,13 @@ public:
     ~option();
 
     // daily price and delta of the option
-    std::vector<double> get_underlying_data(const ptrdiff_t datapos_1, const ptrdiff_t datapos_2) const;
+    std::vector<double> get_underlying_data() const;
     std::vector<double> BS_price() const;
     std::vector<double> BS_delta() const;
     void modify_vol(double vol);
     const double get_volatility();
     void modify_strike(double strike);
-    std::vector<ptrdiff_t> get_datapos() const;
+    
 
 private:
     time_series m_underlying;
