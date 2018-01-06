@@ -2,6 +2,8 @@
 #include <stdio.h> // include the FILENAME_MAX
 #include <functional>
 #include <numeric>
+#include <fstream>
+#include <stdlib.h> // I THINK IT IS FOR GNUPLOT
 // #define WINDOWS  /* uncomment this line to use it for windows.*/
 #ifdef WINDOWS
 #include <direct.h>
@@ -72,8 +74,13 @@ int main(int argc, char* argv[])
         fair_vol_BSR[i] = breakeven_vol(target_option, tol, up_vol, low_vol, true);
     }
     
-    // graph the resulting volatility smile
-    
+    /*/ graph the resulting volatility smile
+
+    std::ofstream f("break_vol.dat");
+    f << strike << "\t" << fair_vol << std::endl;
+    f.close();
+    std::system("gnuplot break_vol.dat");*/ //to test
+
     return 0;
 }
 
