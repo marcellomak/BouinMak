@@ -159,7 +159,7 @@ double breakeven_vol(option opt, const double& tol, double up_vol, double low_vo
     std::vector<double> PnL = PnL_Hedged(opt, 1., BSR);
     
     double acc_PnL;
-    acc_PnL = 0;
+    acc_PnL = 0.;
     std::for_each(PnL.begin(), PnL.end(), [&acc_PnL](double arg){acc_PnL += arg;});
     
     double up_acc_PnL;
@@ -170,20 +170,20 @@ double breakeven_vol(option opt, const double& tol, double up_vol, double low_vo
         // compute PNL with upper vol
         opt.modify_vol(up_vol);
         PnL = PnL_Hedged(opt, 1., BSR);
-        up_acc_PnL = 0;
+        up_acc_PnL = 0.;
         std::for_each(PnL.begin(), PnL.end(), [&up_acc_PnL](double arg){up_acc_PnL += arg;});
         
         // compute PNL with lower vol
         opt.modify_vol(low_vol);
         PnL = PnL_Hedged(opt, 1., BSR);
-        low_acc_PnL = 0;
+        low_acc_PnL = 0.;
         std::for_each(PnL.begin(), PnL.end(), [&low_acc_PnL](double arg){low_acc_PnL += arg;});
         
         // account for the case where PNLs from upper vol and lower vol have the same sign
         if(up_acc_PnL * low_acc_PnL > 0)
         {
             std::cout << "No solution can be found." << std::endl;
-            mid_vol = 0;
+            mid_vol = 0.;
         }
         else
         {
@@ -208,7 +208,7 @@ double breakeven_vol(option opt, const double& tol, double up_vol, double low_vo
                 mid_vol = low_vol + ((up_vol - low_vol)/2.);
                 opt.modify_vol(mid_vol);
                 PnL = PnL_Hedged(opt, 1., BSR);
-                acc_PnL = 0;
+                acc_PnL = 0.;
                 std::for_each(PnL.begin(), PnL.end(), [&acc_PnL](double arg){acc_PnL += arg;});
             }
         }
