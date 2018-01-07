@@ -1,4 +1,6 @@
 #include "break_even_volatility.hpp"
+#include <math.h>
+#include <cmath>
 
 /*******************************************
    *time series constructor & destructor*
@@ -110,7 +112,7 @@ std::vector<time_t> time_series::get_date(const ptrdiff_t& startpos, const ptrdi
      *option constructor & destructor*
 ********************************************/
 
-option::option(const time_series& underlying, const double& strike, const double& vol, const time_series& rate, const std::string& maturity, const size_t& term_day, const int& type)
+option::option(const time_series& underlying, double& strike, double& vol, const time_series& rate, const std::string& maturity, const size_t& term_day, const int& type)
     : m_underlying(underlying), m_strike(strike), m_vol(vol), m_maturity(maturity), m_term_day(term_day), m_type(type)
 {
     std::cout<<"Option Constructor"<<std::endl;
@@ -154,7 +156,7 @@ option::option(const time_series& underlying, const double& strike, const double
     }
 }
 
-option::option(const time_series& underlying, const double& strike, const double& vol, const double& rate, const std::string& maturity, const size_t& term_day, const int& type)
+option::option(const time_series& underlying, double& strike, double& vol, const double& rate, const std::string& maturity, const size_t& term_day, const int& type)
     : m_underlying(underlying), m_strike(strike), m_vol(vol), m_maturity(maturity), m_term_day(term_day), m_type(type)
 {
     std::cout<<"Option Constructor"<<std::endl;
@@ -208,9 +210,9 @@ std::vector<double> option::BS_price() const
             d2 = d1 - m_vol * sqrt(time_to_maturity[i]);
             option_price[i] = sign * (normalCDF(sign * d1) * underlying_data[i] - sign * normalCDF(sign * d2) * m_strike * exp(-m_fixedrate[i] * time_to_maturity[i]));
         }
-        else // call option payoff at maturity
+        else // option payoff at maturity
         {
-            option_price[i] = std::max((sign * underlying_data[i] - m_strike), 0.);
+            option_price[i] = std::max(sign * (underlying_data[i] - m_strike), 0.);
         }
     }
     
