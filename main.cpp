@@ -2,7 +2,7 @@
 #include <stdio.h> // include the FILENAME_MAX
 #include <functional>
 #include <numeric>
-#include "C:\Users\MY\BouinMak\CImg.h"
+//#include "C:\Users\MY\BouinMak\CImg.h"
 #define WINDOWS  /* uncomment this line to use it for windows.*/
 #ifdef WINDOWS
 #include <direct.h>
@@ -19,46 +19,60 @@ double breakeven_vol(option opt, const double& tol, double up_vol, double low_vo
 
 int main(int argc, char* argv[])
 {
-    // enter the file name of underlying and interest rate data
+    /*******************************************
+                      *INPUT*
+    ********************************************/
+    
+    // DATA - enter the file name of underlying and interest rate data (enter the constant interest rate)
     std::string underlying_filename("S&P500.csv");
-    std::string interestrate_filename("LIBOR.csv"); /* comment this line for constant rate */
+    //std::string interestrate_filename("LIBOR.csv"); /* comment this line and line 56 for constant rate */
+    double interestrate = 0.0; /* uncomment this line for constant rate */
+    
+    // TARGET DATE AND TERM OF THE IMPLIED VOLATILITY
+    std::string target_date = "12/12/2017";
+    size_t term = 365;
+    
+    // TARGET STRIKE BOUNDARY AND NUMBER OF STEPS
+    double up_strike = 1.2;
+    double low_strike = 0.8;
+    size_t N = 400;
+    
+    // INITIAL VOLATILITY BOUND LEVELS
+    double up_vol = 0.5;
+    double low_vol = 0.002;
+    
+    // TOLERANCE LEVEL - PNL
+    double tol = 0.000001;
+    
+    // OUTPUT FILE NAME
+    std::string output_filename("BreakevenVolOutput.csv");
+
+    /*****************************************/
     
     // read underlying and interest rate data
     std::string current_dir = get_dir();
     current_dir.erase(current_dir.size() - 5); // remove "build" from the directory
     time_series underlying(current_dir + underlying_filename, "S&P500");
-    time_series interestrate(current_dir + interestrate_filename, "LIBOR"); /* comment this line for constant rate */
-    // double interestrate = 0.0; /* uncomment this line for constant rate */
+    //time_series interestrate(current_dir + interestrate_filename, "LIBOR"); /* comment this line for constant rate */
     
     // create a vector of strike level for creating the volatility smile
-    double low_strike = 0.2;
-    double up_strike = 1.8;
-    std::vector<double> strike = linspace(low_strike, up_strike, (up_strike - low_strike) * 1000); // every 0.1% strike level
+    std::vector<double> strike = linspace(low_strike, up_strike, N);
     
-    // target term
-    size_t term = 365;
-    
-    // target date
-    std::string target_date = "12/12/2017";
-    
-    // vol initial bound
-    double up_vol = 0.5;
-    double low_vol = 0.002;
+    // initial mid vol
     double mid_vol = low_vol + ((up_vol - low_vol)/2.);
-    
-    // tolerance
-    double tol = 0.0001;
     
     // create a vector to store the resulting fair vols
     std::vector<double> fair_vol(strike.size());
     std::vector<double> fair_vol_BSR(strike.size());
+    
+    double S0;
     
     try
     {
         option target_option(underlying, strike[0], mid_vol, interestrate, target_date, term, 1);
         
         // transform the strike vector from percentage to price level
-        double S0 = target_option.get_underlying_data()[0];
+        S0 = target_option.get_underlying_data()[0];
         std::transform(strike.begin(), strike.end(), strike.begin(), [S0](double& arg){return arg * S0;});
         
         // breakeven volatility based on 0 delta hedging PNL
@@ -77,9 +91,23 @@ int main(int argc, char* argv[])
         std::cerr << msg << std::endl;
     }
     
+    // generate output file
+    std::ofstream output_file;
+    output_file.open(current_dir + output_filename);
+    
+    output_file << "Strike Level" << "," << "Strike % of S0" << "," << "Fair Vol" << "," << "Fair Vol (BSR)" << std::endl;
+    
+    for(size_t i = 0; i < strike.size(); i++)
+    {
+        output_file << strike[i] << "," << strike[i] / S0 << "," << fair_vol[i] << "," << fair_vol_BSR[i] << std::endl;
+    }
+    
+    output_file.close();
+    
+    /*
     // graph the resulting volatility smile
     cimg_library::CImg<>(strike,fair_vol).display_graph("This",1);
-
+    */
     return 0;
 }
 
@@ -179,7 +207,7 @@ double breakeven_vol(option opt, const double& tol, double up_vol, double low_vo
         if(up_acc_PnL * low_acc_PnL > 0)
         {
             std::cout << "No solution can be found." << std::endl;
-            mid_vol = 0.;
+            mid_vol = nan("1");
         }
         else
         {
