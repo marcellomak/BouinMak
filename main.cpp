@@ -4,7 +4,7 @@
 #include <numeric>
 #include <fstream>
 #include <stdlib.h> // I THINK IT IS FOR GNUPLOT
-#define WINDOWS  /* uncomment this line to use it for windows.*/
+// #define WINDOWS  /* uncomment this line to use it for windows.*/
 #ifdef WINDOWS
 #include <direct.h>
 #define get_current_dir _getcwd
@@ -15,21 +15,21 @@
 
 std::string get_dir();
 std::vector<double> linspace(double a, double b, size_t n);
-std::vector<double>& PnL_Hedged(const option& opt, bool BSR);
+std::vector<double> PnL_Hedged(const option& opt, double N, bool BSR);
 double breakeven_vol(option opt, const double& tol, double up_vol, double low_vol, bool BSR);
 
 int main(int argc, char* argv[])
 {
     // enter the file name of underlying and interest rate data
     std::string underlying_filename("S&P500.csv");
-    std::string interestrate_filename("LIBOR.csv"); /* comment this line for constant rate */
+    // std::string interestrate_filename("LIBOR.csv"); /* comment this line for constant rate */
     
     // read underlying and interest rate data
     std::string current_dir = get_dir();
     current_dir.erase(current_dir.size() - 5); // remove "build" from the directory
     time_series underlying(current_dir + underlying_filename, "S&P500");
-    time_series interestrate(current_dir + interestrate_filename, "LIBOR"); /* comment this line for constant rate */
-    // double rate = 0.01; /* uncomment this line for constant rate */
+    // time_series interestrate(current_dir + interestrate_filename, "LIBOR"); /* comment this line for constant rate */
+    double interestrate = 0.0; /* uncomment this line for constant rate */
     
     // create a vector of strike level for creating the volatility smile
     double low_strike = 0.2;
@@ -40,12 +40,12 @@ int main(int argc, char* argv[])
     size_t term = 365;
     
     // target date
-    std::string target_date = "18/12/2017";
+    std::string target_date = "12/12/2017";
     
     // vol initial bound
     double up_vol = 0.5;
     double low_vol = 0.002;
-    double mid_vol = (up_vol + low_vol) / 2.;
+    double mid_vol = low_vol + ((up_vol - low_vol)/2.);
     
     // tolerance
     double tol = 0.0001;
@@ -64,14 +64,11 @@ int main(int argc, char* argv[])
     for(size_t i = 0; i < strike.size(); i++)
     {
         target_option.modify_strike(strike[i]);
+        std::cout << "OPTION strike " << strike[i] << " ; % of S0: " << strike[i] / S0 << std::endl;
         fair_vol[i] = breakeven_vol(target_option, tol, up_vol, low_vol, false);
-    }
-    
-    // breakeven volatility based on 0 delta hedging PNL (calculated by Black-Scholes Robustness formula)
-    for(size_t i = 0; i < strike.size(); i++)
-    {
-        target_option.modify_strike(strike[i]);
+        // based on Black-Scholes Robustness formula
         fair_vol_BSR[i] = breakeven_vol(target_option, tol, up_vol, low_vol, true);
+        std::cout << std::endl;
     }
     
     /*/ graph the resulting volatility smile
@@ -114,7 +111,7 @@ std::vector<double> linspace(double a, double b, size_t n)
 }
 
 // function to calculate the daily PNL of a delta hedged option position
-std::vector<double>& PnL_Hedged(option opt, double N, bool BSR)
+std::vector<double> PnL_Hedged(const option& opt, double N, bool BSR)
 {
     std::vector<double> underlying = opt.get_underlying_data();
     
@@ -155,12 +152,15 @@ std::vector<double>& PnL_Hedged(option opt, double N, bool BSR)
 // function to get the breakeven vol which makes the delta hedged PNL of the option = 0
 double breakeven_vol(option opt, const double& tol, double up_vol, double low_vol, bool BSR)
 {
-    double mid_vol = (up_vol + low_vol) / 2.;
+    double mid_vol = low_vol + ((up_vol - low_vol)/2.);
     opt.modify_vol(mid_vol);
     
     // compute PNL with initial mid vol
     std::vector<double> PnL = PnL_Hedged(opt, 1., BSR);
-    double acc_PnL = std::for_each(PnL.begin(), PnL.end(), [&acc_PnL](double arg){acc_PnL += arg;});
+    
+    double acc_PnL;
+    acc_PnL = 0;
+    std::for_each(PnL.begin(), PnL.end(), [&acc_PnL](double arg){acc_PnL += arg;});
     
     double up_acc_PnL;
     double low_acc_PnL;
@@ -170,12 +170,14 @@ double breakeven_vol(option opt, const double& tol, double up_vol, double low_vo
         // compute PNL with upper vol
         opt.modify_vol(up_vol);
         PnL = PnL_Hedged(opt, 1., BSR);
-        up_acc_PnL = std::for_each(PnL.begin(), PnL.end(), [&up_acc_PnL](double arg){up_acc_PnL += arg;});
+        up_acc_PnL = 0;
+        std::for_each(PnL.begin(), PnL.end(), [&up_acc_PnL](double arg){up_acc_PnL += arg;});
         
         // compute PNL with lower vol
         opt.modify_vol(low_vol);
         PnL = PnL_Hedged(opt, 1., BSR);
-        low_acc_PnL = std::for_each(PnL.begin(), PnL.end(), [&low_acc_PnL](double arg){low_acc_PnL += arg;});
+        low_acc_PnL = 0;
+        std::for_each(PnL.begin(), PnL.end(), [&low_acc_PnL](double arg){low_acc_PnL += arg;});
         
         // account for the case where PNLs from upper vol and lower vol have the same sign
         if(up_acc_PnL * low_acc_PnL > 0)
@@ -185,8 +187,11 @@ double breakeven_vol(option opt, const double& tol, double up_vol, double low_vo
         }
         else
         {
+            int iterator = 0;
             while(std::fabs(acc_PnL) > tol)
             {
+                iterator = iterator + 1;
+                std::cout << "#iteration " << iterator << std::endl;
                 if(acc_PnL * up_acc_PnL > 0)
                 {
                     // if PNL with mid vol has the same sign as the PNL with upper vol, replace upper vol with current mid vol
@@ -203,9 +208,11 @@ double breakeven_vol(option opt, const double& tol, double up_vol, double low_vo
                 mid_vol = low_vol + ((up_vol - low_vol)/2.);
                 opt.modify_vol(mid_vol);
                 PnL = PnL_Hedged(opt, 1., BSR);
-                acc_PnL = std::for_each(PnL.begin(), PnL.end(), [&acc_PnL](double arg){acc_PnL += arg;});
+                acc_PnL = 0;
+                std::for_each(PnL.begin(), PnL.end(), [&acc_PnL](double arg){acc_PnL += arg;});
             }
         }
     }
+    std::cout << "Resulting PNL: " << acc_PnL << std::endl;
     return mid_vol;
 }
