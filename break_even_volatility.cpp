@@ -326,7 +326,7 @@ void option::modify_strike(double strike)
 
 
 /*******************************************
-          *auxillary functions*
+          *auxiliary functions*
 ********************************************/
 
 // function converting date string to time_t object

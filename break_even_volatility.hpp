@@ -73,7 +73,7 @@ private:
 protected:
 };
 
-// function converting date string to time_t object
+// auxiliary functions
 time_t c_str_timet(const std::string& targetdate);
 double normalCDF(const double& x);
 double normalPDF(const double& x);

@@ -3,7 +3,7 @@
 #include <functional>
 #include <numeric>
 //#include "C:\Users\MY\BouinMak\CImg.h"
-//#define WINDOWS  /* uncomment this line to use it for windows.*/
+#define WINDOWS  /* uncomment this line to use it for windows.*/
 #ifdef WINDOWS
 #include <direct.h>
 #define get_current_dir _getcwd
@@ -25,20 +25,20 @@ int main(int argc, char* argv[])
     
     // DATA - enter the file name of underlying and interest rate data (enter the constant interest rate)
     std::string underlying_filename("S&P500.csv");
-    //std::string interestrate_filename("LIBOR.csv"); /* comment this line and line 56 for constant rate */
-    double interestrate = 0.0; /* uncomment this line for constant rate */
+    //std::string interestrate_filename("LIBOR3M.csv"); /* comment this line and line 56 for constant rate */
+    double interestrate = 0.00; /* uncomment this line for constant rate */
     
     // TARGET DATE AND TERM OF THE IMPLIED VOLATILITY
-    std::string target_date = "12/12/2017";
+    std::string target_date = "18/12/2017";
     size_t term = 365;
     
     // TARGET STRIKE BOUNDARY AND NUMBER OF STEPS
-    double up_strike = 1.8;
-    double low_strike = 0.2;
+    double up_strike = 1.2;
+    double low_strike = 0.8;
     size_t N = 1600;
     
     // INITIAL VOLATILITY BOUND LEVELS
-    double up_vol = 0.5;
+    double up_vol = 0.500;
     double low_vol = 0.002;
     
     // TOLERANCE LEVEL - PNL
