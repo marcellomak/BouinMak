@@ -3,7 +3,7 @@
 #include <functional>
 #include <numeric>
 //#include "C:\Users\MY\BouinMak\CImg.h"
-#define WINDOWS  /* uncomment this line to use it for windows.*/
+//#define WINDOWS  /* uncomment this line to use it for windows.*/
 #ifdef WINDOWS
 #include <direct.h>
 #define get_current_dir _getcwd
@@ -33,9 +33,9 @@ int main(int argc, char* argv[])
     size_t term = 365;
     
     // TARGET STRIKE BOUNDARY AND NUMBER OF STEPS
-    double up_strike = 1.2;
-    double low_strike = 0.8;
-    size_t N = 400;
+    double up_strike = 1.8;
+    double low_strike = 0.2;
+    size_t N = 1600;
     
     // INITIAL VOLATILITY BOUND LEVELS
     double up_vol = 0.5;

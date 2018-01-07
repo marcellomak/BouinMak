@@ -187,10 +187,18 @@ std::vector<double> option::BS_price() const
 	    sign = -1;
     }
 	
+    /*
     // create a vector to store time to maturity in year (based on trading days)
     std::vector<double> time_to_maturity(underlying_data.size());
     std::iota(time_to_maturity.begin(), time_to_maturity.end(), 1); // fill the vector with increasing number from 1,2,3,...
     std::transform(time_to_maturity.begin(), time_to_maturity.end(), time_to_maturity.begin(), [underlying_data](double& arg){return (underlying_data.size() - arg) / 252.;}); // revert the vector from ascending order to descending order and change the unit to year
+    */
+    
+    // create a vector to store time to maturity in year (based on calendar days)
+    std::vector<time_t> underlying_date = m_underlying.get_date(m_datapos[0], m_datapos[1]);
+    time_t end_date = underlying_date[underlying_date.size() - 1];
+    std::vector<double> time_to_maturity(underlying_date.size());
+    std::transform(underlying_date.begin(), underlying_date.end(), time_to_maturity.begin(), [end_date](time_t& arg){return (static_cast<double> (end_date - arg))/(24.*60.*60.*365.);});
     
     std::vector<double> option_price(underlying_data.size());
     double d1;
@@ -217,10 +225,18 @@ std::vector<double> option::BS_delta() const
 {
     std::vector<double> underlying_data = m_underlying.get_data(m_datapos[0], m_datapos[1]);
     
+    /*
     // create a vector to store time to maturity in year (based on trading days)
     std::vector<double> time_to_maturity(underlying_data.size());
     std::iota(time_to_maturity.begin(), time_to_maturity.end(), 1); // fill the vector with increasing number from 1,2,3,...
     std::transform(time_to_maturity.begin(), time_to_maturity.end(), time_to_maturity.begin(), [underlying_data](double& arg){return (underlying_data.size() - arg) / 252.;}); // revert the vector from ascending order to descending order and change the unit to year
+    */
+     
+    // create a vector to store time to maturity in year (based on calendar days)
+    std::vector<time_t> underlying_date = m_underlying.get_date(m_datapos[0], m_datapos[1]);
+    time_t end_date = underlying_date[underlying_date.size() - 1];
+    std::vector<double> time_to_maturity(underlying_date.size());
+    std::transform(underlying_date.begin(), underlying_date.end(), time_to_maturity.begin(), [end_date](time_t& arg){return (static_cast<double> (end_date - arg))/(24.*60.*60.*365.);});
     
     std::vector<double> option_delta(underlying_data.size());
     double d1;
@@ -255,10 +271,18 @@ std::vector<double> option::BS_gamma() const
 {
     std::vector<double> underlying_data = m_underlying.get_data(m_datapos[0], m_datapos[1]);
     
+    /*
     // create a vector to store time to maturity in year (based on trading days)
     std::vector<double> time_to_maturity(underlying_data.size());
     std::iota(time_to_maturity.begin(), time_to_maturity.end(), 1); // fill the vector with increasing number from 1,2,3,...
     std::transform(time_to_maturity.begin(), time_to_maturity.end(), time_to_maturity.begin(), [underlying_data](double& arg){return (underlying_data.size() - arg) / 252.;}); // revert the vector from ascending order to descending order and change the unit to year
+    */
+    
+    // create a vector to store time to maturity in year (based on calendar days)
+    std::vector<time_t> underlying_date = m_underlying.get_date(m_datapos[0], m_datapos[1]);
+    time_t end_date = underlying_date[underlying_date.size() - 1];
+    std::vector<double> time_to_maturity(underlying_date.size());
+    std::transform(underlying_date.begin(), underlying_date.end(), time_to_maturity.begin(), [end_date](time_t& arg){return (static_cast<double> (end_date - arg))/(24.*60.*60.*365.);});
     
     std::vector<double> option_gamma(underlying_data.size());
     double d1;
