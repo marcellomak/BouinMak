@@ -2,9 +2,8 @@
 #include <stdio.h> // include the FILENAME_MAX
 #include <functional>
 #include <numeric>
-#include <fstream>
-#include <stdlib.h> // I THINK IT IS FOR GNUPLOT
-// #define WINDOWS  /* uncomment this line to use it for windows.*/
+#include "C:\Users\MY\BouinMak\CImg.h"
+#define WINDOWS  /* uncomment this line to use it for windows.*/
 #ifdef WINDOWS
 #include <direct.h>
 #define get_current_dir _getcwd
@@ -71,13 +70,9 @@ int main(int argc, char* argv[])
         std::cout << std::endl;
     }
     
-    /*/ graph the resulting volatility smile
+    // graph the resulting volatility smile
+    cimg_library::CImg<>(strike,fair_vol).display_graph("This",1);
 
-    std::ofstream f("break_vol.dat");
-    f << strike << "\t" << fair_vol << std::endl;
-    f.close();
-    std::system("gnuplot break_vol.dat");*/ //to test
-    
     for (size_t i = 0; i < fair_vol.size(); i++)
     {
     	std::cout<<"Fair vol is "<< fair_vol[i]<< "for the strike" << strike[i] << std::endl;
