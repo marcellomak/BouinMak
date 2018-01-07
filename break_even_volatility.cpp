@@ -208,7 +208,7 @@ std::vector<double> option::BS_price() const
         {
             d1 = 1. / (m_vol * sqrt(time_to_maturity[i])) * (log(underlying_data[i] / m_strike) + (m_fixedrate[i] + pow(m_vol, 2.) / 2.) * time_to_maturity[i]);
             d2 = d1 - m_vol * sqrt(time_to_maturity[i]);
-            option_price[i] = sign * (normalCDF(sign * d1) * underlying_data[i] - sign * normalCDF(sign * d2) * m_strike * exp(-m_fixedrate[i] * time_to_maturity[i]));
+            option_price[i] = sign * (normalCDF(sign * d1) * underlying_data[i] - normalCDF(sign * d2) * m_strike * exp(-m_fixedrate[i] * time_to_maturity[i]));
         }
         else // option payoff at maturity
         {
