@@ -3,7 +3,7 @@
 #include <functional>
 #include <numeric>
 //#include "C:\Users\MY\BouinMak\CImg.h"
-#define WINDOWS  /* uncomment this line to use it for windows.*/
+//#define WINDOWS  /* uncomment this line to use it for windows.*/
 #ifdef WINDOWS
 #include <direct.h>
 #define get_current_dir _getcwd
@@ -33,9 +33,9 @@ int main(int argc, char* argv[])
     size_t term = 365;
     
     // TARGET STRIKE BOUNDARY AND NUMBER OF STEPS
-    double up_strike = 1.2;
-    double low_strike = 0.8;
-    size_t N = 1600;
+    double up_strike = 1.5;
+    double low_strike = 0.5;
+    size_t N = 1000;
     
     // INITIAL VOLATILITY BOUND LEVELS
     double up_vol = 0.500;
@@ -180,7 +180,7 @@ double breakeven_vol(option opt, const double& tol, double up_vol, double low_vo
     opt.modify_vol(mid_vol);
     
     // compute PNL with initial mid vol
-    std::vector<double> PnL = PnL_Hedged(opt, 1., BSR);
+    std::vector<double> PnL = PnL_Hedged(opt, -1., BSR);
     
     double acc_PnL;
     acc_PnL = 0.;
@@ -193,13 +193,13 @@ double breakeven_vol(option opt, const double& tol, double up_vol, double low_vo
     {
         // compute PNL with upper vol
         opt.modify_vol(up_vol);
-        PnL = PnL_Hedged(opt, 1., BSR);
+        PnL = PnL_Hedged(opt, -1., BSR);
         up_acc_PnL = 0.;
         std::for_each(PnL.begin(), PnL.end(), [&up_acc_PnL](double arg){up_acc_PnL += arg;});
         
         // compute PNL with lower vol
         opt.modify_vol(low_vol);
-        PnL = PnL_Hedged(opt, 1., BSR);
+        PnL = PnL_Hedged(opt, -1., BSR);
         low_acc_PnL = 0.;
         std::for_each(PnL.begin(), PnL.end(), [&low_acc_PnL](double arg){low_acc_PnL += arg;});
         
@@ -231,7 +231,7 @@ double breakeven_vol(option opt, const double& tol, double up_vol, double low_vo
                 // compute PNL with new mid vol (midpoint of the new upper vol and lower vol)
                 mid_vol = low_vol + ((up_vol - low_vol)/2.);
                 opt.modify_vol(mid_vol);
-                PnL = PnL_Hedged(opt, 1., BSR);
+                PnL = PnL_Hedged(opt, -1., BSR);
                 acc_PnL = 0.;
                 std::for_each(PnL.begin(), PnL.end(), [&acc_PnL](double arg){acc_PnL += arg;});
                 std::cout << "  --  Vol: " << mid_vol << " / PNL: " << acc_PnL << std::endl;

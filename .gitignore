@@ -33,3 +33,6 @@
 
 # Files in build directory
 build/
+
+# Output file
+/BreakevenVolOutput.csv
