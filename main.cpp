@@ -54,23 +54,28 @@ int main(int argc, char* argv[])
     std::vector<double> fair_vol(strike.size());
     std::vector<double> fair_vol_BSR(strike.size());
     
-    option target_option(underlying, strike[0], mid_vol, interestrate, target_date, term, 1);
-    
-    // transform the strike vector from percentage to price level
-    double S0 = target_option.get_underlying_data()[0];
-    std::transform(strike.begin(), strike.end(), strike.begin(), [S0](double& arg){return arg * S0;});
-
-    // breakeven volatility based on 0 delta hedging PNL
-    for(size_t i = 0; i < strike.size(); i++)
+    try
     {
-        target_option.modify_strike(strike[i]);
-        std::cout << "OPTION strike " << strike[i] << "; % of S0: " << strike[i] / S0 * 100 << std::endl;
-        fair_vol[i] = breakeven_vol(target_option, tol, up_vol, low_vol, false);
-        std::cout << "Fair vol is " << fair_vol[i] << std::endl;
-        // based on Black-Scholes Robustness formula
-        fair_vol_BSR[i] = breakeven_vol(target_option, tol, up_vol, low_vol, true);
-        std::cout << "Fair vol (BSR) is " << fair_vol_BSR[i] << std::endl;
-        std::cout << std::endl;
+        option target_option(underlying, strike[0], mid_vol, interestrate, target_date, term, 1);
+        
+        // transform the strike vector from percentage to price level
+        double S0 = target_option.get_underlying_data()[0];
+        std::transform(strike.begin(), strike.end(), strike.begin(), [S0](double& arg){return arg * S0;});
+        
+        // breakeven volatility based on 0 delta hedging PNL
+        for(size_t i = 0; i < strike.size(); i++)
+        {
+            target_option.modify_strike(strike[i]);
+            std::cout << "OPTION strike " << strike[i] << "; % of S0: " << strike[i] / S0 * 100 << std::endl;
+            fair_vol[i] = breakeven_vol(target_option, tol, up_vol, low_vol, false);
+            std::cout << "Fair vol is " << fair_vol[i] << std::endl;
+            // based on Black-Scholes Robustness formula
+            fair_vol_BSR[i] = breakeven_vol(target_option, tol, up_vol, low_vol, true);
+            std::cout << "Fair vol (BSR) is " << fair_vol_BSR[i] << std::endl;
+            std::cout << std::endl;
+        }
+    } catch(const char* msg) {
+        std::cerr << msg << std::endl;
     }
     
     // graph the resulting volatility smile

@@ -60,8 +60,7 @@ std::vector<ptrdiff_t> time_series::get_datapos(const std::string& maturity, con
     ptrdiff_t endpos = std::find(m_datadate.begin(), m_datadate.end(), maturityt) - m_datadate.begin(); // find the position of maturity date
     if (endpos >= m_datadate.size()) // check if the end date is in the data series
     {
-        std::cout << "Target date is not found in the data!!" << std::endl;
-        return result; // !!TO DO: Replace by error!
+        throw "Target date is not found in the data!";
     }
     else
     {
@@ -82,8 +81,7 @@ std::vector<ptrdiff_t> time_series::get_datapos(const std::string& maturity, con
         
         if(startfound == false)
         {
-            std::cout << "Not enough historical data!!" << std::endl;
-            return result; // !!TO DO: Replace by error!
+            throw "Not enough historical data!";
         }
         else
         {
@@ -115,8 +113,6 @@ std::vector<time_t> time_series::get_date(const ptrdiff_t& startpos, const ptrdi
 option::option(const time_series& underlying, double& strike, double& vol, const time_series& rate, const std::string& maturity, const size_t& term_day, const int& type)
     : m_underlying(underlying), m_strike(strike), m_vol(vol), m_maturity(maturity), m_term_day(term_day), m_type(type)
 {
-    std::cout<<"Option Constructor"<<std::endl;
-
     // store the position of data (target period) in the whole underlying series
     m_datapos = m_underlying.get_datapos(m_maturity, m_term_day);
     
@@ -128,6 +124,7 @@ option::option(const time_series& underlying, double& strike, double& vol, const
     
     ptrdiff_t target_pos;
     time_t target_date;
+    m_fixedrate.reserve(data_date.size());
     
     for(size_t i = 0; i < data_date.size(); i++) // loop through all the dates of target underlying data to find the corresponding rates
     {
@@ -146,8 +143,7 @@ option::option(const time_series& underlying, double& strike, double& vol, const
         }
         if(target_found == false)
         {
-            std::cout << "Missing interest rate data at " << i << std::endl; // if the date is not found
-            m_fixedrate.push_back(0); // !!TO DO: Replace by error!
+            throw "Missing interest rate data!";
         }
         else
         {
@@ -159,8 +155,6 @@ option::option(const time_series& underlying, double& strike, double& vol, const
 option::option(const time_series& underlying, double& strike, double& vol, const double& rate, const std::string& maturity, const size_t& term_day, const int& type)
     : m_underlying(underlying), m_strike(strike), m_vol(vol), m_maturity(maturity), m_term_day(term_day), m_type(type)
 {
-    std::cout<<"Option Constructor"<<std::endl;
-    
     // store the position of data (target period) in the whole underlying series
     m_datapos = m_underlying.get_datapos(m_maturity, m_term_day);
     
