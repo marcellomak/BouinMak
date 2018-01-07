@@ -260,7 +260,7 @@ std::vector<double> option::BS_delta() const
         }
         else // delta at maturity
         {
-            option_delta[i] = 0;
+            option_delta[i] = 0.;
         }
     }
     
@@ -344,12 +344,12 @@ time_t c_str_timet(const std::string& targetdate)
 // function return Normal CDF N(x)
 double normalCDF(const double& x)
 {
-    return std::erfc(-x/sqrt(2))/2;
+    return std::erfc(-x/sqrt(2.))/2.;
 }
 
 // function return Normal PDF
 double normalPDF(const double& x)
 {
-    double result = (1. / sqrt(2. * M_PI)) * exp(-pow(x, 2.) / 2);
+    double result = (1. / sqrt(2. * M_PI)) * exp(-pow(x, 2.) / 2.);
     return result;
 }
