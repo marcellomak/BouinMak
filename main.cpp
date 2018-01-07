@@ -22,14 +22,14 @@ int main(int argc, char* argv[])
 {
     // enter the file name of underlying and interest rate data
     std::string underlying_filename("S&P500.csv");
-    // std::string interestrate_filename("LIBOR.csv"); /* comment this line for constant rate */
+    std::string interestrate_filename("LIBOR.csv"); /* comment this line for constant rate */
     
     // read underlying and interest rate data
     std::string current_dir = get_dir();
     current_dir.erase(current_dir.size() - 5); // remove "build" from the directory
     time_series underlying(current_dir + underlying_filename, "S&P500");
-    // time_series interestrate(current_dir + interestrate_filename, "LIBOR"); /* comment this line for constant rate */
-    double interestrate = 0.0; /* uncomment this line for constant rate */
+    time_series interestrate(current_dir + interestrate_filename, "LIBOR"); /* comment this line for constant rate */
+    // double interestrate = 0.0; /* uncomment this line for constant rate */
     
     // create a vector of strike level for creating the volatility smile
     double low_strike = 0.2;
@@ -64,25 +64,22 @@ int main(int argc, char* argv[])
     for(size_t i = 0; i < strike.size(); i++)
     {
         target_option.modify_strike(strike[i]);
-        std::cout << "OPTION strike " << strike[i] << " ; % of S0: " << strike[i] / S0 << std::endl;
+        std::cout << "OPTION strike " << strike[i] << "; % of S0: " << strike[i] / S0 * 100 << std::endl;
         fair_vol[i] = breakeven_vol(target_option, tol, up_vol, low_vol, false);
+        std::cout << "Fair vol is " << fair_vol[i] << std::endl;
         // based on Black-Scholes Robustness formula
         fair_vol_BSR[i] = breakeven_vol(target_option, tol, up_vol, low_vol, true);
+        std::cout << "Fair vol (BSR) is " << fair_vol_BSR[i] << std::endl;
         std::cout << std::endl;
     }
     
-    /*/ graph the resulting volatility smile
-
+    // graph the resulting volatility smile
+    /*
     std::ofstream f("break_vol.dat");
     f << strike << "\t" << fair_vol << std::endl;
     f.close();
-    std::system("gnuplot break_vol.dat");*/ //to test
-    
-    for (size_t i = 0; i < fair_vol.size(); i++)
-    {
-    	std::cout<<"Fair vol is "<< fair_vol[i]<< "for the strike" << strike[i] << std::endl;
-    	std::cout<<"Fair vol BSR is "<< fair_vol_BSR[i] << "for the strike" << strike[i] << std::endl;
-    }
+    std::system("gnuplot break_vol.dat"); //to test
+    */
 
     return 0;
 }
@@ -191,7 +188,7 @@ double breakeven_vol(option opt, const double& tol, double up_vol, double low_vo
             while(std::fabs(acc_PnL) > tol)
             {
                 iterator = iterator + 1;
-                std::cout << "#iteration " << iterator << std::endl;
+                std::cout << "#iteration " << iterator;
                 if(acc_PnL * up_acc_PnL > 0)
                 {
                     // if PNL with mid vol has the same sign as the PNL with upper vol, replace upper vol with current mid vol
@@ -210,6 +207,7 @@ double breakeven_vol(option opt, const double& tol, double up_vol, double low_vo
                 PnL = PnL_Hedged(opt, 1., BSR);
                 acc_PnL = 0.;
                 std::for_each(PnL.begin(), PnL.end(), [&acc_PnL](double arg){acc_PnL += arg;});
+                std::cout << "  --  Vol: " << mid_vol << " / PNL: " << acc_PnL << std::endl;
             }
         }
     }
