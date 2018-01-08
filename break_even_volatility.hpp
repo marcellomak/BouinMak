@@ -56,6 +56,8 @@ public:
     std::vector<double> BS_delta() const;
     std::vector<double> BS_gamma() const;
     std::vector<double> get_underlying_data() const;
+    std::vector<time_t> get_date() const;
+    std::vector<double> get_rate() const;
     void modify_vol(double vol);
     double get_volatility() const;
     void modify_strike(double strike);

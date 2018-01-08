@@ -138,39 +138,47 @@ std::vector<double> linspace(double a, double b, size_t n)
 std::vector<double> PnL_Hedged(const option& opt, double N, bool BSR)
 {
     std::vector<double> underlying = opt.get_underlying_data();
+    std::vector<time_t> datadate = opt.get_date();
+    std::vector<double> PnL(underlying.size());
+    PnL[0] = 0;
     
 	if(BSR == false)
     {
         std::vector<double> price = opt.BS_price();
         std::vector<double> delta = opt.BS_delta();
-        std::vector<double> PnL_opt(price.size()-1);
-        std::vector<double> PnL_hedge(price.size()-1);
+        std::vector<double> rate = opt.get_rate();
         
-        for(size_t i = 0; i < underlying.size() - 1; i++)
+        std::vector<double> PnL_opt(underlying.size());
+        std::vector<double> PnL_hedge(underlying.size());
+        std::vector<double> cash(underlying.size());
+        
+        PnL_opt[0] = 0;
+        PnL_hedge[0] = 0;
+        cash[0] = N * (-price[0] + delta[0] * underlying[0]); // initial cash position
+        
+        for(size_t i = 1; i < underlying.size(); i++)
         {
-            PnL_opt[i] = N*(price[i+1] - price [i]);
-            PnL_hedge[i] = N*delta[i]*(underlying[i+1] - underlying[i]);
+            PnL_opt[i] = N * (price[i] - price [i-1]); // daily PNL of the option position
+            PnL_hedge[i] = -N * delta[i] * (underlying[i] - underlying[i-1]); // daily PNL of the underlying position
+            cash[i] = cash[i-1] * (1 + rate[i-1]) * (static_cast<double> (datadate[i] - datadate[i-1])) / (24.*60.*60.*365.) + PnL_hedge[i] - N * delta[i] * underlying[i]; // daily value of cash position
+            
+            PnL[i] = PnL_opt[i] + PnL_hedge[i] + cash[i-1] * rate[i-1] * (static_cast<double> (datadate[i] - datadate[i-1])) / (24.*60.*60.*365.);
         }
-        
-        std::transform(PnL_opt.begin(), PnL_opt.end(), PnL_hedge.begin(), PnL_opt.begin(), std::minus<double>());
-        return PnL_opt;
     }
     else
     {
         // calculation based on Black-Scholes Robustness formula
         std::vector<double> gamma = opt.BS_gamma();
         double vol = opt.get_volatility();
-        double deltat = 1./252.;
-        std::vector<double> PnL(underlying.size());
         double deltaS;
         
-        for(size_t i = 0; i < underlying.size() - 1; i++)
+        for(size_t i = 1; i < underlying.size(); i++)
         {
-            deltaS = underlying[i+1] - underlying[i];
-            PnL[i] = N * (0.5 * gamma[i] * pow(underlying[i], 2.) * (pow(deltaS / underlying[i], 2.) - pow(vol, 2.) * deltat));
+            deltaS = underlying[i] - underlying[i-1];
+            PnL[i] = N * (0.5 * gamma[i-1] * pow(underlying[i-1], 2.) * (pow(deltaS / underlying[i-1], 2.) - pow(vol, 2.) * (static_cast<double> (datadate[i] - datadate[i-1])) / (24.*60.*60.*365.)));
         }
-        return PnL;
     }
+    return PnL;
 }
 
 // function to get the breakeven vol which makes the delta hedged PNL of the option = 0

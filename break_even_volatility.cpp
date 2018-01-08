@@ -309,6 +309,16 @@ std::vector<double> option::get_underlying_data() const
     return m_underlying.get_data(m_datapos[0], m_datapos[1]);
 }
 
+std::vector<time_t> option::get_date() const
+{
+    return m_underlying.get_date(m_datapos[0], m_datapos[1]);
+}
+
+std::vector<double> option::get_rate() const
+{
+    return m_fixedrate;
+}
+
 void option::modify_vol(double vol)
 {
 	m_vol = vol;
