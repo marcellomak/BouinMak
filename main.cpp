@@ -26,7 +26,7 @@ int main(int argc, char* argv[])
     // DATA - enter the file name of underlying and interest rate data (enter the constant interest rate)
     std::string underlying_filename("S&P500.csv");
     //std::string interestrate_filename("LIBOR3M.csv"); /* comment this line and line 56 for constant rate */
-    double interestrate = 0.00; /* uncomment this line for constant rate */
+    double interestrate = 0.01; /* uncomment this line for constant rate */
     
     // TARGET DATE AND TERM OF THE IMPLIED VOLATILITY
     std::string target_date = "18/12/2017";
@@ -159,8 +159,8 @@ std::vector<double> PnL_Hedged(const option& opt, double N, bool BSR)
         for(size_t i = 1; i < underlying.size(); i++)
         {
             PnL_opt[i] = N * (price[i] - price [i-1]); // daily PNL of the option position
-            PnL_hedge[i] = -N * delta[i] * (underlying[i] - underlying[i-1]); // daily PNL of the underlying position
-            cash[i] = cash[i-1] * (1 + rate[i-1]) * (static_cast<double> (datadate[i] - datadate[i-1])) / (24.*60.*60.*365.) + PnL_hedge[i] - N * delta[i] * underlying[i]; // daily value of cash position
+            PnL_hedge[i] = -N * delta[i-1] * (underlying[i] - underlying[i-1]); // daily PNL of the underlying position
+            cash[i] = cash[i-1] * (1 + rate[i-1]) * (static_cast<double> (datadate[i] - datadate[i-1])) / (24.*60.*60.*365.) + N * (delta[i] - delta[i-1]) * underlying[i]; // daily value of cash position
             
             PnL[i] = PnL_opt[i] + PnL_hedge[i] + cash[i-1] * rate[i-1] * (static_cast<double> (datadate[i] - datadate[i-1])) / (24.*60.*60.*365.);
         }
