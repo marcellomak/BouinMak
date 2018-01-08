@@ -3,7 +3,7 @@
 #include <functional>
 #include <numeric>
 //#include "C:\Users\MY\BouinMak\CImg.h"
-//#define WINDOWS  /* uncomment this line to use it for windows.*/
+#define WINDOWS  /* uncomment this line to use it for windows.*/
 #ifdef WINDOWS
 #include <direct.h>
 #define get_current_dir _getcwd
@@ -25,8 +25,8 @@ int main(int argc, char* argv[])
     
     // DATA - enter the file name of underlying and interest rate data (enter the constant interest rate)
     std::string underlying_filename("S&P500.csv");
-    //std::string interestrate_filename("LIBOR3M.csv"); /* comment this line and line 56 for constant rate */
-    double interestrate = 0.01; /* uncomment this line for constant rate */
+    std::string interestrate_filename("LIBOR3M.csv"); /* comment this line and line 56 for constant rate */
+    //double interestrate = 0.0099733; /* LIBOR 3M on 16/12/2016 */ /* uncomment this line for constant rate */
     
     // TARGET DATE AND TERM OF THE IMPLIED VOLATILITY
     std::string target_date = "18/12/2017";
@@ -53,7 +53,7 @@ int main(int argc, char* argv[])
     std::string current_dir = get_dir();
     current_dir.erase(current_dir.size() - 5); // remove "build" from the directory
     time_series underlying(current_dir + underlying_filename, "S&P500");
-    //time_series interestrate(current_dir + interestrate_filename, "LIBOR"); /* comment this line for constant rate */
+    time_series interestrate(current_dir + interestrate_filename, "LIBOR"); /* comment this line for constant rate */
     
     // create a vector of strike level for creating the volatility smile
     std::vector<double> strike = linspace(low_strike, up_strike, N);
@@ -81,10 +81,10 @@ int main(int argc, char* argv[])
             target_option.modify_strike(strike[i]);
             std::cout << "OPTION strike " << strike[i] << "; % of S0: " << strike[i] / S0 * 100 << std::endl;
             fair_vol[i] = breakeven_vol(target_option, tol, up_vol, low_vol, false);
-            std::cout << "Fair vol is " << fair_vol[i] << std::endl;
+            std::cout << "Break-even vol is " << fair_vol[i] << std::endl;
             // based on Black-Scholes Robustness formula
             fair_vol_BSR[i] = breakeven_vol(target_option, tol, up_vol, low_vol, true);
-            std::cout << "Fair vol (BSR) is " << fair_vol_BSR[i] << std::endl;
+            std::cout << "Break-even vol (BSR) is " << fair_vol_BSR[i] << std::endl;
             std::cout << std::endl;
         }
     } catch(const char* msg) {
@@ -95,7 +95,7 @@ int main(int argc, char* argv[])
     std::ofstream output_file;
     output_file.open(current_dir + output_filename);
     
-    output_file << "Strike Level" << "," << "Strike % of S0" << "," << "Fair Vol" << "," << "Fair Vol (BSR)" << std::endl;
+    output_file << "Strike Level" << "," << "Strike % of S0" << "," << "Break-even Vol" << "," << "Break-even Vol (BSR)" << std::endl;
     
     for(size_t i = 0; i < strike.size(); i++)
     {
@@ -120,7 +120,7 @@ std::string get_dir()
     return current_dir;
 }
 
-// function to generate a equally spaced vector with bound [a, b] and size n+1
+// function to generate an equally spaced vector with bound [a, b] and size n+1
 std::vector<double> linspace(double a, double b, size_t n)
 {
     std::vector<double> result(n + 1);
@@ -160,7 +160,7 @@ std::vector<double> PnL_Hedged(const option& opt, double N, bool BSR)
         {
             PnL_opt[i] = N * (price[i] - price [i-1]); // daily PNL of the option position
             PnL_hedge[i] = -N * delta[i-1] * (underlying[i] - underlying[i-1]); // daily PNL of the underlying position
-            cash[i] = cash[i-1] * (1 + rate[i-1]) * (static_cast<double> (datadate[i] - datadate[i-1])) / (24.*60.*60.*365.) + N * (delta[i] - delta[i-1]) * underlying[i]; // daily value of cash position
+            cash[i] = cash[i-1] * (1 + rate[i-1] * (static_cast<double> (datadate[i] - datadate[i-1])) / (24.*60.*60.*365.)) + N * (delta[i] - delta[i-1]) * underlying[i]; // daily value of cash position
             
             PnL[i] = PnL_opt[i] + PnL_hedge[i] + cash[i-1] * rate[i-1] * (static_cast<double> (datadate[i] - datadate[i-1])) / (24.*60.*60.*365.);
         }
